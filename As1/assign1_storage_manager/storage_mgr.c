@@ -77,7 +77,16 @@ extern RC closePageFile (SM_FileHandle *fHandle){
 
 
 extern RC destroyPageFile (char *fileName){
-
+    //remove deleted the file and returns 0 if it's successfully deleted
+    int temp  = remove(fileName);
+	if(temp != 0){
+        printf("File wasn't deleted");
+        return RC_FILE_NOT_FOUND;
+        
+	}else{
+        printf("File Deleted");
+		return RC_OK; 
+    }
 }
 
 /* reading blocks from disc */
