@@ -305,15 +305,145 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 }
 
 /* writing blocks to a page file */
-extern RC writeBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage){
 
+RC writeBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
+{
+   // Check if the file handle and management info are initialized
+  if (fHandle == NULL || fHandle->mgmtInfo == NULL)
+  {
+    // Print error message if file is not available
+    printf("Write Block Action Failure\n");
+    printf("File doesn't exist.\n");
+    // Return with error File not found
+    return RC_FILE_HANDLE_NOT_INIT;
+  }
+
+  // Inspects the validity of page
+  if (fHandle->totalNumPages <= pageNum)
+  {
+    printf("Write Block Action Failure\n");
+    printf("Not a valid page number.\n");
+    // Return with the write failed error
+    return RC_WRITE_FAILED;
+  }
+
+  // Started seeking here
+  if (fseek((FILE *)fHandle->mgmtInfo, PAGE_SIZE * pageNum, SEEK_SET) != 0)
+  {
+    // Print error message if seeking fails
+    printf("Write Block Action Failed\n");
+    printf("Couldn't reach the file's beginning.\n");
+    // return with write failed error
+    return RC_WRITE_FAILED;
+  }
+
+  if (fwrite(memPage, 1, PAGE_SIZE, (FILE *)fHandle->mgmtInfo) != PAGE_SIZE)
+  {
+    // failure to write
+    printf("Write Block Action Failure\n");
+    printf("Could not write data.\n");
+    return RC_WRITE_FAILED;
+  }
+
+  // Updating the page
+  fHandle->curPagePos = pageNum;
+
+  return RC_OK;
 }
-extern RC writeCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage){
 
+
+RC writeCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
+{
+  printf("Writing to disk from the memory");
+   // Invoke the writeBlock function to write the current block to disk
+  RC write_block_res = writeBlock(fHandle->curPagePos, fHandle, memPage);
+  // Checking if write operation was successful
+  if (write_block_res != RC_OK)
+  {
+    printf("Writing current block to disk failed.\n");
+    return write_block_res; // Return the error code from writeBlock
+  }
+
+  return RC_OK;
 }
-extern RC appendEmptyBlock (SM_FileHandle *fHandle){
 
+
+
+// append an empty new block to the end of the file, since the previous blocks are full
+RC appendEmptyBlock(SM_FileHandle *fHandle)
+{
+   // Obtain the file pointer
+  pagefile = (FILE *)fHandle->mgmtInfo;
+  if (fHandle == NULL)
+  {
+    printf("Initializing is not done in File handle. Ending execution.\n");
+    return RC_FILE_HANDLE_NOT_INIT;
+  }
+
+ // Create and allocate memory for a new block within the page size of the file
+  SM_PageHandle newBlock = (char *)calloc(PAGE_SIZE, sizeof(char));
+
+  fseek(pagefile, 0, SEEK_END);// Move to the end of the file to add a new block
+
+  for (int i = 0; i < PAGE_SIZE; i++) // Write empty spaces to create an empty block
+  {
+     // Write null to create an empty page
+    fwrite("\0", 1, 1, pagefile);
+    // Move to the end of the file for additional empty spaces if needed
+    fseek(pagefile, 0, SEEK_END);
+  }
+  
+   // Increment the total number of pages since a new block was appended
+  int finalPageNum = fHandle->totalNumPages;
+  finalPageNum += 1;
+  fHandle->totalNumPages = finalPageNum;
+
+  // Update the current page position for reading and writing data
+  fHandle->curPagePos += 1;
+
+  // releasing the new block created, for writing
+  free(newBlock);
+  return RC_OK;
 }
-extern RC ensureCapacity (int numberOfPages, SM_FileHandle *fHandle){
 
+
+extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
+{
+  if (fHandle == NULL)
+  {
+    printf("ensureCapacity failure: RC_FILE_HANDLE_NOT_INIT \n");
+    return RC_FILE_HANDLE_NOT_INIT;
+  }
+  else
+  {
+    if (fHandle->totalNumPages >= numberOfPages)
+    {
+      printf("success in ensureCapacity: Fine already \n");
+      return RC_OK;
+    }
+    else
+    {
+      int count = 0;
+      int final = numberOfPages - fHandle->totalNumPages;
+      printf("ensureCapacity: trying to add pages %d \n", final);
+      while (count < final)
+      {
+        count++;
+        int appendResult = appendEmptyBlock(fHandle);
+        if (appendResult != RC_OK)
+        {
+          printf("ensureCapacity failure: due to failure of appendEmptyBlock \n");
+          return appendResult;
+        }
+        else
+        {
+          continue;
+        }
+      }
+      // Update the total number of pages
+      fHandle->totalNumPages = numberOfPages;
+      printf("Successfull in ensureCapacity \n");
+      return RC_OK;
+    }
+  }
 }
