@@ -1,0 +1,51 @@
+2. Read Implementation:
+
+readBlock():
+      ->Check If FileHandle is not null
+      ->Page number should be non negative and less than total number of pages
+      ->Creating an empty file in read mode for reading only, and validate if it was created and opened successfully.
+      ->Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
+      ->return 0 on successfull, then read items from the file and count them to check if they re within page limit
+      ->At last,set the position of the cursor to the pageNumber to read
+
+getBlockPos():
+      ->Check If FileHandle is not null
+      ->Retur the current page position.
+
+readFirstBlock():
+      ->Check If FileHandle is not null
+      ->Page number should be not be NULL and total pages in the file should be greater than 0
+      ->Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
+      ->return 0 on successfull, then reading items from the file
+      ->Set the position of the cursor to the pageNumber to read, in this case it will be set to zero
+
+readPreviousBlock():
+      ->Check If FileHandle is not null
+      ->Page number should be not be NULL and total pages in the file should be greater than 0
+      ->Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
+      ->return 0 on successfull, then reading items from the file
+      ->Set the position of the cursor to the pageNumber to read, in this case it will be set to one less page than the cureent page
+
+
+readCurrentBlock():
+     ->Check If FileHandle is not null
+      ->Page number should be not be NULL and total pages in the file should be greater than 0
+      ->Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
+      ->return 0 on successfull, then reading items from the file
+      ->Set the position of the cursor to the pageNumber to read, in this case it will be the current position
+
+readNextBlock():
+      ->Check If FileHandle is not null
+      ->Page number should be not be NULL and total pages in the file should be greater than 0
+      ->Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
+      ->return 0 on successfull, then reading items from the file
+      ->Set the position of the cursor to the pageNumber to read, in this case it will be set to one greater than the current page position
+
+
+readLastBlock():
+     ->Check If FileHandle is not null
+      ->Page number should be not be NULL and total pages in the file should be greater than 0
+      ->Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
+      ->return 0 on successfull, then reading items from the file
+      ->Set the position of the cursor to the pageNumber to read, in this case it will be set to last page(Last page index is total page count-1)
+
