@@ -92,21 +92,13 @@ extern RC destroyPageFile (char *fileName){
 
 /* reading blocks from disc */
 
-bool pageExist(int pageNum){
-    if(pageNum>0)
-            return true;
-    else{
-        return false
-    }
-
-}
 
 extern RC readBlock ( int pageNum , SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
 //STEP 0: Check If FileHandle is not null
 if(fHandler!=NULL){
     //STEP 1: Page number should be non negative and less than total number of pages 
-if (pageExist(pageNum) || pageNum > (*fHandle).totalNumPages )	
+if (pageNum>0 || pageNum > (*fHandle).totalNumPages )	
 		return RC_READ_NON_EXISTING_PAGE;
 else{
     //STEP 2: Creating an empty file in read mode for reading only, and validate if it was created and opened successfully
@@ -157,7 +149,7 @@ extern RC readFirstBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage ){
 //STEP 1: Page number should be not be NULL and total pages in the file should be greater than 0
 //STEP 2:Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
 //return 0 on successfull return
- if (pageExist((*fHandle).totalNumPages) && (fseek(pagefile, 0, SEEK_SET)==0))
+ if (((*fHandle).totalNumPages>0) && (fseek(pagefile, 0, SEEK_SET)==0))
  {
         //STEP 3:Reading items from the file
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
@@ -191,7 +183,7 @@ extern RC readPreviousBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
 //STEP 2:Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
 //return 0 on successfull return
  else {
- if(!pageExist((*fHandle).totalNumPages) && (fseek(pagefile, (previousblock * PAGE_SIZE), SEEK_SET)==0))
+ if((*fHandle).totalNumPages>0 && (fseek(pagefile, (previousblock * PAGE_SIZE), SEEK_SET)==0))
  {
         //STEP 3:Reading iteams from the file
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
@@ -224,7 +216,7 @@ extern RC readCurrentBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
 //STEP 2:Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
 //return 0 on successfull return
  else {
- if(!pageExist((*fHandle).totalNumPages) && (fseek(pagefile, (currentblock * PAGE_SIZE), SEEK_SET)==0))
+ if((*fHandle).totalNumPages>0 && (fseek(pagefile, (currentblock * PAGE_SIZE), SEEK_SET)==0))
  {
         //STEP 3:Reading items from the file
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
@@ -263,7 +255,7 @@ extern RC readNextBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
         //STEP 3:Page Size should not be greater than 0 but not greater then page size
 
-  if(!pageExist(fileReadSize) && fileReadSize >PAGE_SIZE)
+  if(fileReadSize>0 && fileReadSize >PAGE_SIZE)
           return RC_READ_NON_EXISTING_PAGE;
      //STEP 4:Set the position of the cursor to the next block position
   (*fHandle).curPagePos = fileReadSize;
@@ -292,7 +284,7 @@ extern RC readLastBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
         //STEP 3:Page Size should not be greater than 0 but not greater then page size
 (*fHandle).curPagePos = lastblock;
-  if(!pageExist(fileReadSize) && fileReadSize >PAGE_SIZE)
+  if(fileReadSize>0 && fileReadSize >PAGE_SIZE)
           return RC_READ_NON_EXISTING_PAGE;
      //STEP 4:Set the position of the cursor to the next block position
     return RC_OK;
