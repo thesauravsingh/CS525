@@ -116,9 +116,9 @@ else{
     RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
     //STEP 5:Count of Item's read should should be within page limit
     if(fileReadSize < PAGE_SIZE || fileReadSize > PAGE_SIZE)
-	  printf("Cannot read a non-existing page!");
+    { printf("Cannot read a non-existing page!");
           return RC_READ_NON_EXISTING_PAGE;
-
+    }
      //STEP 6:Set the position of the cursor to the pageNumber to read
      (*fHandle).curPagePos = pageNum;
 	printf("Read Succeeded /n");
@@ -159,9 +159,9 @@ extern RC readFirstBlock( SM_FileHandle *fHandle , SM_PageHandle memPage ){
         //STEP 3:Reading items from the file
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
   if(fileReadSize < PAGE_SIZE || fileReadSize > PAGE_SIZE)
-	  printf("Cannot read a non-existing page!");
+  {  printf("Cannot read a non-existing page!");
           return RC_READ_NON_EXISTING_PAGE;
-
+  }
      //STEP 4:Set the position of the cursor to the pageNumber to read
      (*fHandle).curPagePos = 0;
 	printf("Read First Block Succeeded!");
@@ -280,9 +280,10 @@ extern RC readNextBlock ( SM_FileHandle *fHandle , SM_PageHandle memPage )
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
         //STEP 3:Page Size should not be greater than 0 but not greater then page size
 (*fHandle).curPagePos = nextblock;
-  if(fileReadSize>0 && fileReadSize >PAGE_SIZE)
-	  printf("Cannot read a non-existing page!");
+  if(fileReadSize<0 && fileReadSize >PAGE_SIZE)
+  {  printf("Cannot read a non-existing page!");
           return RC_READ_NON_EXISTING_PAGE;
+  }
      //STEP 4:Set the position of the cursor to the next block position
 printf("Read Next Block Succeeded!");
     return RC_OK;
