@@ -121,7 +121,7 @@ else{
 
      //STEP 6:Set the position of the cursor to the pageNumber to read
      (*fHandle).curPagePos = pageNum;
-	
+	printf("Read Succeeded /n");
           return RC_OK;
     }
     else {
@@ -131,7 +131,7 @@ else{
 }
 }
 else{
-    printf("Page is NULL!");
+    printf("File not found!");
     return RC_FILE_NOT_FOUND;
 }
 
@@ -140,9 +140,11 @@ extern int getBlockPos(SM_FileHandle *fHandle){
 //STEP 0: Check If FileHandle is not null
 if(fHandle != NULL)
 //STEP 1: Return Page position
+  printf("Block Position Successfully Returned /n");
    return (*fHandle).curPagePos;
 else
-{ return RC_FILE_NOT_FOUND; }
+{    printf("File not found!");
+ return RC_FILE_NOT_FOUND; }
 }
 
 extern RC readFirstBlock( SM_FileHandle *fHandle , SM_PageHandle memPage ){
@@ -161,6 +163,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 
      //STEP 4:Set the position of the cursor to the pageNumber to read
      (*fHandle).curPagePos = 0;
+	printf("Read First Block Succeeded!");
           return RC_OK;
  }else{
 	 	printf("Cannot read a non-existing page!");
@@ -168,6 +171,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
  }
 }
  else {
+	     printf("File not found!");
 		return RC_FILE_NOT_FOUND; 
 	}
 }
@@ -199,6 +203,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
   }
 
      //STEP 4:Set the position of the cursor to the pageNumber to read
+  printf("Read Previous Page Succeeded!");
     return RC_OK;
  }else{
 	 printf("Cannot read a non-existing page!");
@@ -206,6 +211,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
  }
 }}
  else {
+	printf("File not found!");
 	return RC_FILE_NOT_FOUND; 
 	}
 }
@@ -236,6 +242,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
           return RC_READ_NON_EXISTING_PAGE;
   }
 else{
+printf("Read Current Block Succeeded!");
 return RC_OK;
 }
  }else{
@@ -245,6 +252,7 @@ return RC_OK;
 }
 }
  else {
+	     printf("File not found!");
 		return RC_FILE_NOT_FOUND; 
 	}
 }
@@ -275,7 +283,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 	  printf("Cannot read a non-existing page!");
           return RC_READ_NON_EXISTING_PAGE;
      //STEP 4:Set the position of the cursor to the next block position
-  
+printf("Read Next Block Succeeded!");
     return RC_OK;
  }else{
 	 	printf("Cannot read a non-existing page!");
@@ -284,6 +292,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 }
 }
  else {
+	     printf("File not found!");
 		return RC_FILE_NOT_FOUND; 
 	}
 }
@@ -307,6 +316,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
           return RC_READ_NON_EXISTING_PAGE;
   }
      //STEP 4:Set the position of the cursor to the next block position
+printf("Read Last Block Succeeded!");
     return RC_OK;
  }else{
 	 	 printf("Cannot read a non-existing page!");
@@ -314,6 +324,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
  }
 }
  else {
+	     printf("File not found!");
 		return RC_FILE_NOT_FOUND; 
 	}
 }
