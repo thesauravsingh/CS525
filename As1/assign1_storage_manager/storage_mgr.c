@@ -98,9 +98,10 @@ extern RC readBlock (int pageNum ,SM_FileHandle *fHandle ,SM_PageHandle memPage 
 //STEP 0: Check If FileHandle is not null
 if(fHandle != NULL){
     //STEP 1: Page number should be non negative and less than total number of pages 
-if (pageNum > 0 || pageNum > (*fHandle).totalNumPages )	
+if (pageNum > 0 || pageNum > (*fHandle).totalNumPages )	{
 	printf("Cannot read a non-existing page!");
 	return RC_READ_NON_EXISTING_PAGE;
+}
 else{
     //STEP 2: Creating an empty file in read mode for reading only, and validate if it was created and opened successfully
     if(fopen((*fHandle).fileName, "r") == NULL)
@@ -138,10 +139,11 @@ else{
 }
 extern int getBlockPos(SM_FileHandle *fHandle){
 //STEP 0: Check If FileHandle is not null
-if(fHandle != NULL)
+if(fHandle != NULL){
 //STEP 1: Return Page position
   printf("Block Position Successfully Returned /n");
    return (*fHandle).curPagePos;
+}
 else
 {    printf("File not found!");
  return RC_FILE_NOT_FOUND; }
@@ -220,7 +222,7 @@ extern RC readCurrentBlock ( SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
     RC currentblock;
     //STEP 0: Check If FileHandle is not null
-    if(fHandle !=- NULL){
+    if(fHandle != NULL){
         //STEP 1: Set the Position of the Block to previous i.e. (current -1)
          currentblock =(*fHandle).curPagePos;
 
@@ -236,7 +238,7 @@ extern RC readCurrentBlock ( SM_FileHandle *fHandle , SM_PageHandle memPage )
         //STEP 4:Reading items from the file
 RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
  (*fHandle).curPagePos = fileReadSize;
-  if(fileReadSize > PAGE_SIZE || curr_blockread < 0)
+  if(fileReadSize > PAGE_SIZE || fileReadSize < 0)
   {
 	  printf("Cannot read a non-existing page!");
           return RC_READ_NON_EXISTING_PAGE;
