@@ -40,10 +40,11 @@ extern RC createPageFile (char *fileName){
             //De-allocating the memory allocated to nullBlock to free up memory
 	    free(nullBlock);
         printf("Write Succeeded /n");
-      return RC_OK;
+      
 		}else{
             printf("Write failed /n");
         }
+		return RC_OK;
 	}
 }
 extern RC openPageFile (char *fileName, SM_FileHandle *fHandle){
