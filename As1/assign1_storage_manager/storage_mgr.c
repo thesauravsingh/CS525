@@ -96,7 +96,7 @@ extern RC destroyPageFile (char *fileName){
 extern RC readBlock ( int pageNum , SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
 //STEP 0: Check If FileHandle is not null
-if(fHandler!=NULL){
+if(fHandle!=NULL){
     //STEP 1: Page number should be non negative and less than total number of pages 
 if (pageNum>0 || pageNum > (*fHandle).totalNumPages )	
 		return RC_READ_NON_EXISTING_PAGE;
@@ -132,9 +132,9 @@ else{
 }
 
 
-extern int getBlockPos (SM_FileHandle*fHandle){
+extern int getBlockPos(SM_FileHandle *fHandle){
 //STEP 0: Check If FileHandle is not null
-if(fHandler!=NULL)
+if(fHandle!=NULL)
 //STEP 1: Return Page position
    return (*fHandle).curPagePos;
 else
@@ -143,9 +143,9 @@ else
 }
 }
 
-extern RC readFirstBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage ){
+extern RC readFirstBlock( SM_FileHandle *fHandle , SM_PageHandle memPage ){
     //STEP 0: Check If FileHandle is not null
-    if(fHandler!=NULL){
+    if(fHandle!=NULL){
 //STEP 1: Page number should be not be NULL and total pages in the file should be greater than 0
 //STEP 2:Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
 //return 0 on successfull return
@@ -157,7 +157,7 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
           return RC_READ_NON_EXISTING_PAGE;
 
      //STEP 4:Set the position of the cursor to the pageNumber to read
-     (*fHandle).curPagePos = pageNum;
+     (*fHandle).curPagePos = 0;
           return RC_OK;
  }else{
 		return RC_READ_NON_EXISTING_PAGE;
@@ -169,11 +169,11 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 }
 
 
-extern RC readPreviousBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
+extern RC readPreviousBlock ( SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
     RC previousblock;
     //STEP 0: Check If FileHandle is not null
-    if(fHandler!=NULL){
+    if(fHandle!=NULL){
         //STEP 1: Set the Position of the Block to previous i.e. (current -1)
         previousblock =(*fHandle).curPagePos - 1; 
 
@@ -202,11 +202,11 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 	}
 }
 
-extern RC readCurrentBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
+extern RC readCurrentBlock ( SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
     RC currentblock;
     //STEP 0: Check If FileHandle is not null
-    if(fHandler!=NULL){
+    if(fHandle!=NULL){
         //STEP 1: Set the Position of the Block to previous i.e. (current -1)
          currentblock =(*fHandle).curPagePos;
 
@@ -235,11 +235,11 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 	}
 }
 
-extern RC readNextBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
+extern RC readNextBlock ( SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
      RC nextblock;
     //STEP 0: Check If FileHandle is not null
-    if(fHandler!=NULL){
+    if(fHandle!=NULL){
         //STEP 1: Set the Position of the Block to previous i.e. (current -1)
         nextblock =(*fHandle).curPagePos + 1; 
 
@@ -270,11 +270,11 @@ RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
 	}
 }
 
-extern RC readLastBlock ( SM_FileHandle * fHandle , SM_PageHandle memPage )
+extern RC readLastBlock( SM_FileHandle *fHandle , SM_PageHandle memPage )
 {
     RC lastblock;
     //STEP 0: Check If FileHandle is not null
-    if(fHandler!=NULL){
+    if(fHandle!=NULL){
         //STEP 1: Set the Position of the Block to previous i.e. (current -1)
         lastblock =(*fHandle).totalNumPages - 1; 
 
