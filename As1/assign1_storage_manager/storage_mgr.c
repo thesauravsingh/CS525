@@ -34,16 +34,15 @@ extern RC createPageFile (char *fileName){
         //Creating an empty page in memory
 		SM_PageHandle nullBlock = (SM_PageHandle)calloc(PAGE_SIZE,sizeof(char));
         // Writing the nullBlock page to file
-		if(fwrite(nullBlock,sizeof(char),PAGE_SIZE, pagefile) >= PAGE_SIZE) {
-			//flushing all file buffers and freeing the memory to prevent memory leaks.
-			fclose(pagefile);
-            //De-allocating the memory allocated to nullBlock to free up memory
-	    free(nullBlock);
-        printf("Write Succeeded /n");
-      
+		if(fwrite(nullBlock,sizeof(char),PAGE_SIZE, pagefile) >= PAGE_SIZE) { 
+        printf("Write Succeeded \n");
 		}else{
-            printf("Write failed /n");
+            printf("Write failed \n");
         }
+		//flushing all file buffers and freeing the memory to prevent memory leaks.
+		fclose(pagefile);
+		//De-allocating the memory allocated to nullBlock to free up memory
+		free(nullBlock);
 		return RC_OK;
 	}
 }
