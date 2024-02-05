@@ -51,10 +51,12 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle){
     if(pagefile != NULL){
      fHandle->fileName = fileName;
      fHandle->curPagePos = 0;
-     struct stat fileInfo;
-     if(fstat(fileno(pagefile), &fileInfo) < 0)    
-     return RC_ERROR;
-     fHandle->totalNumPages = fileInfo.st_size/ PAGE_SIZE;
+     //fseek moves the pointer to the end of the file, thus we get the total file size
+     fseek(pagefile, 0L, SEEK_END);
+     int totalPages = ftell(pagefile);
+     //dividing the total file size by page size to get the total number of pages
+     totalPages = totalPages/PAGE_SIZE;
+     fHandle->totalNumPages = totalPages;
      fHandle->mgmtInfo = pagefile;
      printf("Returning RC_OK");
      fclose(pagefile);
