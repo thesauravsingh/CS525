@@ -91,52 +91,24 @@ extern RC destroyPageFile (char *fileName){
 
 /* reading blocks from disc */
 
+extern RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
+	RC returncode;
+	RC read_size;
 
-extern RC readBlock(int pageNum ,SM_FileHandle *fHandle ,SM_PageHandle memPage )
-{
-//STEP 0: Check If FileHandle is not null
-if(fHandle != NULL){
-    //STEP 1: Page number should be non negative and less than total number of pages 
-if (pageNum < 0 || pageNum > (*fHandle).totalNumPages )	{
-	printf("Cannot read a non-existing page!");
-	return RC_READ_NON_EXISTING_PAGE;
-}
-else{
-    //STEP 2: Creating an empty file in read mode for reading only, and validate if it was created and opened successfully
-    if(fopen((*fHandle).fileName, "r") == NULL)
-    {
-	printf("File not found!");
-        return RC_FILE_NOT_FOUND;
-    }
-    //STEP 3:Moving pointer of the file to the calculated position i.e.(pageNum*PAGE_SIZE)
-    //return 0 on successfull return
-    if(fseek(pagefile, pageNum * PAGE_SIZE, SEEK_SET)==0){
-    //STEP 4:Reading items from the file
-    RC fileReadSize =fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
-    //STEP 5:Count of Item's read should should be within page limit
-    if(fileReadSize < 0 || fileReadSize > PAGE_SIZE)
-    { printf("Cannot read a non-existing page!");
-          return RC_READ_NON_EXISTING_PAGE;
-    }
-     //STEP 6:Set the position of the cursor to the pageNumber to read
-     (*fHandle).curPagePos = pageNum;
-	printf("Read Succeeded /n");
-	    //Closing pagefile
-	    fclose(pagefile);
-          return RC_OK;
-    }
-    else{
-	printf("Cannot read a non-existing page!");
-	return RC_READ_NON_EXISTING_PAGE;
- 
-    } 
-}
-}
-else{
-    printf("File not found!");
-    return RC_FILE_NOT_FOUND;
-}
+	if ((*fHandle).totalNumPages < pageNum)	//If the total no. of pages are more than pageNum throw the error
+		returncode = RC_READ_NON_EXISTING_PAGE;
 
+	else {
+		fseek(file, pageNum * PAGE_SIZE, SEEK_SET);
+		read_size = fread(memPage, sizeof(char), PAGE_SIZE, file);
+		if (read_size < PAGE_SIZE || read_size > PAGE_SIZE) {//If the block returned by fread() is not within the Page size limit, throw an error
+			returncode = RC_READ_NON_EXISTING_PAGE;
+		}
+		(*fHandle).curPagePos = pageNum;//Update current page position to pageNum value
+		returncode = RC_OK;
+	}
+
+	return returncode;
 }
 extern int getBlockPos(SM_FileHandle *fHandle){
 //STEP 0: Check If FileHandle is not null
