@@ -99,7 +99,7 @@ extern RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) 
 		returncode = RC_READ_NON_EXISTING_PAGE;
 
 	else {
-		fseek(file, pageNum * PAGE_SIZE, SEEK_SET);
+		fseek(pagefile, pageNum * PAGE_SIZE, SEEK_SET);
 		read_size = fread(memPage, sizeof(char), PAGE_SIZE, file);
 		if (read_size < PAGE_SIZE || read_size > PAGE_SIZE) {//If the block returned by fread() is not within the Page size limit, throw an error
 			returncode = RC_READ_NON_EXISTING_PAGE;
