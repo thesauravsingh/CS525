@@ -96,7 +96,6 @@ extern RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) 
 
 	if ((*fHandle).totalNumPages < pageNum)	//If the total no. of pages are more than pageNum throw the error
 		return RC_READ_NON_EXISTING_PAGE;
-
 	else {
 		fseek(pagefile, pageNum * PAGE_SIZE, SEEK_SET);
 		RC fileReadSize = fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
