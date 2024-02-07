@@ -81,7 +81,7 @@ extern RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 }
 
 extern RC closePageFile (SM_FileHandle *fHandle) {
-	// Checking if file pointer or the storage manager is intialised. If initialised, then close.
+	// Checking if file pointer was initialized or not.
 	if(page != NULL)
 		page = NULL;	
 	return RC_OK; 
@@ -89,7 +89,7 @@ extern RC closePageFile (SM_FileHandle *fHandle) {
 
 
 extern RC destroyPageFile (char *fileName) {
-	// Opening file stream in read mode. 'r' mode creates an empty file for reading only.	
+	// fopen : opens the file, r denote that we want to open it in readmode	
 	page = fopen(fileName, "r");
 	
 	if(page == NULL)
@@ -100,13 +100,13 @@ extern RC destroyPageFile (char *fileName) {
 	return RC_OK;
 }
 
-// reading blocks from disc 
+
 extern RC readBlock (int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
-	// Checking if the pageNumber parameter is less than Total number of pages and less than 0, then return respective error code
+	// To check if the pageNum is less than total number of pages or less than zero
 	if (pageNum > fHandle->totalNumPages || pageNum < 0)
         	return RC_READ_NON_EXISTING_PAGE;
 
-	// Opening file stream in read mode. 'r' mode creates an empty file for reading only.	
+	// fopen : opens the file, r denote that we want to open it in readmode	
 	page = fopen(fHandle->fileName, "r");
 
 	// Checking if file was successfully opened.
