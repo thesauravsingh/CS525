@@ -92,23 +92,21 @@ extern RC destroyPageFile (char *fileName){
 /* reading blocks from disc */
 
 extern RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
-	RC returncode;
-	RC read_size;
+	//RC read_size;
 
 	if ((*fHandle).totalNumPages < pageNum)	//If the total no. of pages are more than pageNum throw the error
-		returncode = RC_READ_NON_EXISTING_PAGE;
+		return RC_READ_NON_EXISTING_PAGE;
 
 	else {
 		fseek(pagefile, pageNum * PAGE_SIZE, SEEK_SET);
-		read_size = fread(memPage, sizeof(char), PAGE_SIZE, file);
-		if (read_size < PAGE_SIZE || read_size > PAGE_SIZE) {//If the block returned by fread() is not within the Page size limit, throw an error
-			returncode = RC_READ_NON_EXISTING_PAGE;
+		RC fileReadSize = fread(memPage, sizeof(char), PAGE_SIZE, pagefile);
+		if (fileReadSize < PAGE_SIZE || fileReadSize > PAGE_SIZE) {//If the block returned by fread() is not within the Page size limit, throw an error
+			return RC_READ_NON_EXISTING_PAGE;
 		}
 		(*fHandle).curPagePos = pageNum;//Update current page position to pageNum value
-		returncode = RC_OK;
+		return RC_OK;
 	}
 
-	return returncode;
 }
 extern int getBlockPos(SM_FileHandle *fHandle){
 //STEP 0: Check If FileHandle is not null
