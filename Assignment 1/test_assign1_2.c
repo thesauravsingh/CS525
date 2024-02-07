@@ -63,24 +63,17 @@ TEST_CHECK(readBlock(1,&fh, ph));
 for (i=0; i < PAGE_SIZE; i++)
     ASSERT_TRUE((ph[i] == (i % 10) + '0'), "character in page read from disk is the one we expected.");
 
-ASSERT_TRUE((fh.totalNumPages == 2), "Before Appending a new block total number of pages should be 2");
+ASSERT_TRUE((fh.totalNumPages == 2), "Total number of pages should be 2");
 
-printf("Appending new block\n");
-TEST_CHECK(appendEmptyBlock (&fh));
-printf("Now checking if the new block is added\n");
-ASSERT_TRUE((fh.totalNumPages == 2), "Total number of pages should be 3");
-printf("Appending new block successful\n");
-
-
-printf("Reading the new appended block i.e. 2\n");
-TEST_CHECK(readBlock(1,&fh, ph));
-for (i=0; i < PAGE_SIZE; i++)
-    ASSERT_TRUE((ph[i] == 0), "expected zero byte in appened page");
-printf("Testing reading in appended block was successful i.e=2\n");
-
-printf("Starting to write on the appended block i.e=2\n");
+//Now writing on that second block
+printf("Starting to write on third block i.e=2\n");
 TEST_CHECK(writeBlock (2, &fh, ph));
-printf("Writing on appended block successful\n");
+printf("Writing on third block successful\n");
+
+printf("Testing if writing on second block was successful i.e=1\n");
+TEST_CHECK(readBlock(2,&fh, ph));
+for (i=0; i < PAGE_SIZE; i++)
+    ASSERT_TRUE((ph[i] == (i % 10) + '0'), "character in page read from disk is the one we expected.");
 
 printf("Reading the previous block i.e. 1\n");
 TEST_CHECK(readPreviousBlock (&fh, ph));
