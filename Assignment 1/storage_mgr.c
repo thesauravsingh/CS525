@@ -451,6 +451,15 @@ extern RC appendEmptyBlock(SM_FileHandle *fHandle) {
     return RC_OK;
 }
 
+// Function to check if the file handle is initialized
+int isFileHandleInitialized(SM_FileHandle *fHandle) {
+    if (fHandle == NULL) {
+        printf("ensureCapacity failure: RC_FILE_HANDLE_NOT_INIT \n");
+        return 0;
+    }
+    return 1;
+}
+
 // Function to ensure capacity by adding empty blocks
 RC addEmptyBlocks(int numBlocksToAdd, SM_FileHandle *fHandle) {
     int count = 0;
