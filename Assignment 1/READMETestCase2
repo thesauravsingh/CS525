@@ -1,0 +1,53 @@
+# Test Case 2
+
+## Instructions
+
+1. Clone the repository containing the source code.
+2. Compile the program using your preferred C compiler.
+3. Run the executable file to execute the test cases.
+
+## Test Cases
+
+### Testing File Creation and Initialization
+
+This test case verifies the creation of a new page file and ensures that the first block is correctly initialized with zero bytes.
+  1. Create a new page file.
+  2. Open the file and read the first block.
+- Expected Outcome: The first block should be empty after file creation.
+- Status: Passed
+
+### Writing to Blocks
+
+This test case writes data to the first and second blocks of the file and verifies the successful writing operation.
+  1. Write data to the first block.
+  2. Write data to the second block.
+- Expected Outcome: Data should be successfully written to both blocks.
+- Status: Passed
+
+###  Appending a New Block
+
+This test case appends an empty block to the file and ensures that the total number of pages increases accordingly.
+  1. Append an empty block to the file.
+- Expected Outcome: The total number of pages should increase by one after appending.
+- Status: Passed
+
+### Reading and Writing to Appended Block
+
+This test case reads data from the newly appended block, writes data to it, and ensures that the capacity is correctly managed.
+  1. Read data from the appended block.
+  2. Write data to the appended block.
+  3. Ensure capacity.
+- Expected Outcome: Data should be successfully read from and written to the appended block, and the total capacity should be ensured.
+- Status: Passed
+
+### Destroying Page File
+
+ This test case destroys the page file after testing is completed.
+  1. Destroy the page file.
+- Expected Outcome: The page file should be successfully destroyed.
+- Status: Passed
+
+## Conclusion
+
+These extra test cases provide a thorough examination of the storage manager's functionality.
+Ensuring its reliability and robustness in handling file operations at the page level. All test cases have passed, demonstrating the effectiveness of the storage manager implementation.
