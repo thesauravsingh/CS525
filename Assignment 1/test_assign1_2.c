@@ -52,7 +52,8 @@ printf("Starting to write on first block i.e.0\n");
 TEST_CHECK(writeBlock(0, &fh, ph));
 printf("Writing on first block successful\n");
 
-
+TEST_CHECK(writeCurrentBlock(&fh, ph));
+  printf("write current block \n");
  //Now writing on that second block
 printf("Starting to write on second block i.e=1\n");
 TEST_CHECK(writeBlock (1, &fh, ph));
