@@ -50,8 +50,45 @@ RC pinPageLRU(BM_BufferPool * const bm, BM_PageHandle * const page,
 RC pinPageFIFO(BM_BufferPool *const bm, BM_PageHandle *const page,const PageNumber pageNum);
 
 
-extern void FIFO(BM_BufferPool *const bm, PageFrame *page){
+// Function to open page file
+void openPageFile(const char *fileName, FILE *fileHandle) {
+    // Implementation of openPageFile function
+}
 
+// Function to write block to file
+void writeBlock(int pageNum, FILE *fileHandle, const char *data) {
+    // Implementation of writeBlock function
+}
+
+// Function to perform FIFO page replacement algorithm
+extern void FIFO(BM_BufferPool *const bm, PageFrame *page) {
+    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
+    
+    //int bufferSize = BUFFER_SIZE; // Assuming bufferSize is available somewhere
+    
+    int frontIndex = 0;
+    
+    for (int i = 0; i < bufferSize; i++) {
+        if (pageFrame[frontIndex].fixCount == 0) {
+            if (pageFrame[frontIndex].dirtyBit == 1) {
+                FILE *fileHandle;
+                openPageFile(bm->pageFile, &fileHandle);
+                writeBlock(pageFrame[frontIndex].pageNum, &fileHandle, pageFrame[frontIndex].data);
+                
+                // Increment write count or do other operations
+            }
+            
+            // Set page frame's content
+            pageFrame[frontIndex].data = page->data;
+            pageFrame[frontIndex].pageNum = page->pageNum;
+            pageFrame[frontIndex].dirtyBit = page->dirtyBit;
+            pageFrame[frontIndex].fixCount = page->fixCount;
+            break;
+        } else {
+            frontIndex++;
+            frontIndex = (frontIndex % bufferSize == 0) ? 0 : frontIndex;
+        }
+    }
 }
 // Declaring the Least Frequently Used function
 extern void LFU(BM_BufferPool *const bm, PageFrame *page) {
@@ -368,15 +405,39 @@ extern RC pinPage(BM_BufferPool *const bm, BM_PageHandle *const page, const Page
 }
 
 
-extern PageNumber *getFrameContents (BM_BufferPool *const bm)
-{
-	
+PageNumber *allocateFrameContents(int bufferSize) {
+    return (PageNumber *)malloc(sizeof(PageNumber) * bufferSize);
+}
+
+// Function to get frame contents
+extern PageNumber *getFrameContents(BM_BufferPool *const bm, int bufferSize) {
+    PageNumber *frameContents = allocateFrameContents(bufferSize);
+    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
+    
+    // Iterate through all the pages in the buffer pool and set frameContents' value to pageNum of the page
+    for (int i = 0; i < bufferSize; i++) {
+        frameContents[i] = (pageFrame[i].pageNum != -1) ? pageFrame[i].pageNum : NO_PAGE;
+    }
+    
+    return frameContents;
 }
 
 
-extern bool *getDirtyFlags (BM_BufferPool *const bm)
-{
-	
+bool *allocateDirtyFlags(int bufferSize) {
+    return (bool *)malloc(sizeof(bool) * bufferSize);
+}
+
+// Function to get dirty flags
+extern bool *getDirtyFlags(BM_BufferPool *const bm, int bufferSize) {
+    bool *dirtyFlags = allocateDirtyFlags(bufferSize);
+    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
+    
+    // Iterate through all the pages in the buffer pool and set dirtyFlags based on the dirtyBit of the page
+    for (int i = 0; i < bufferSize; i++) {
+        dirtyFlags[i] = (pageFrame[i].dirtyBit == 1) ? true : false;
+    }
+    
+    return dirtyFlags;
 }
 
 
