@@ -106,8 +106,50 @@ extern void LRU(BM_BufferPool *const bm, PageFrame *page){
 }
 
 // Declaring the CLOCK function
-extern void CLOCK(BM_BufferPool *const bm, PageFrame *page){
+extern void CLOCK(BM_BufferPool *const bm, PageFrame *page)
+{
+    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
+    int initialClockPointer = clock_pointer;
 
+    while (1)
+    {
+        clock_pointer = (clock_pointer % bufferSize == 0) ? 0 : clock_pointer;
+
+        if (pageFrame[clock_pointer].hitNum != 1)
+        {
+            // If page in memory has been modified (dirtyBit = 1), then write page to disk
+            if (pageFrame[clock_pointer].dirtyBit == 1)
+            {
+                SM_FileHandle fh;
+                openPageFile(bm->pageFile, &fh);
+                writeBlock(pageFrame[clock_pointer].pageNum, &fh, pageFrame[clock_pointer].data);
+
+                // Increase the writeCount which records the number of writes done by the buffer manager.
+                write_count++;
+            }
+
+            // Setting page frame's content to new page's content
+            pageFrame[clock_pointer].data = page->data;
+            pageFrame[clock_pointer].pageNum = page->pageNum;
+            pageFrame[clock_pointer].dirtyBit = page->dirtyBit;
+            pageFrame[clock_pointer].fixCount = page->fixCount;
+            pageFrame[clock_pointer].hitNum = page->hitNum;
+            clock_pointer++;
+            break;
+        }
+        else
+        {
+            // Reset hitNum to 0 to avoid an infinite loop
+            pageFrame[clock_pointer].hitNum = 0;
+            clock_pointer++;
+
+            // If we have checked all page frames and couldn't find a suitable one, reset clockPointer to the initial position
+            if (clock_pointer == initialClockPointer)
+            {
+                break;
+            }
+        }
+    }
 }
 
 // Buffer Manager Interface Pool Handling
