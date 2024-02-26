@@ -10,11 +10,34 @@
 #define RC_NO_FREE_BUFFER_ERROR 6;
 
 SM_FileHandle *fh;
+// bufferSize: Represents the maximum number of page frames that can be stored in the buffer pool.
+int bufferSize = 0;
+int rearIndex = 0;
+int writeCount = 0;
+int hit = 0;
+int clockPointer = 0;
+int lfuPointer = 0;
+/** 
+rearIndex: Stores the count of the number of pages read from the disk. It is also utilized by the FIFO function to calculate the frontIndex.
+
+writeCount: Counts the number of I/O writes to the disk, indicating the number of pages written to the disk.
+
+hit: Serves as a general counter incremented whenever a page frame is added to the buffer pool. It is employed by the LRU algorithm to determine the least recently added page in the buffer pool.
+
+clockPointer: Used by the CLOCK algorithm to point to the last added page in the buffer pool.
+
+lfuPointer: Utilized by the LFU algorithm to store the position of the least frequently used page frame. It facilitates faster operations from the second replacement onwards.
+**/
 
 
 RC pinPageLRU(BM_BufferPool * const bm, BM_PageHandle * const page,
 		const PageNumber pageNum);
 RC pinPageFIFO(BM_BufferPool *const bm, BM_PageHandle *const page,const PageNumber pageNum);
+
+
+
+
+
 
 // Buffer Manager Interface Pool Handling
 extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName, const int numPages, ReplacementStrategy strategy,void *stratData)
@@ -229,4 +252,67 @@ extern RC pinPage(BM_BufferPool *const bm, BM_PageHandle *const page, const Page
     
     // If all pages are fixed, then return an error
     return RC_ERROR;
+}
+
+
+extern PageNumber *getFrameContents (BM_BufferPool *const bm)
+{
+	
+}
+
+
+extern bool *getDirtyFlags (BM_BufferPool *const bm)
+{
+	
+}
+
+
+/**
+This function takes three parameters: pageFrame, fixCounts, and bufferSize.
+It iterates over bufferSize elements of the pageFrame array.
+For each element, it checks if the fixCount is not equal to -1. If true, it assigns the fixCount to the corresponding index of fixCounts. Otherwise, it assigns 0.
+This function effectively calculates the fix counts for each page frame and stores them in the fixCounts array.
+**/
+void calculateFixCounts(PageFrame *pageFrame, int *fixCounts, int bufferSize) {
+    int i = 0;
+    while(i < bufferSize) {
+        fixCounts[i] = (pageFrame[i].fixCount != -1) ? pageFrame[i].fixCount : 0;
+        i++;
+    }
+}
+
+/**
+This function takes a single parameter bm, which is a pointer to a BM_BufferPool structure representing a buffer pool handler.
+It allocates memory for an integer array fixCounts of size bufferSize, where bufferSize is a global variable or defined elsewhere.
+It retrieves the pageFrame array from the bm buffer pool handler.
+It then calls the calculateFixCounts function to compute the fix counts and populate the fixCounts array.
+Finally, it returns the fixCounts array containing the fix counts for each page frame.
+**/
+extern int *getFixCounts(BM_BufferPool *const bm) {
+    int *fixCounts = malloc(sizeof(int) * bufferSize);
+    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
+    calculateFixCounts(pageFrame, fixCounts, bufferSize);
+    return fixCounts;
+}
+
+
+/**
+This function, getNumReadIO, takes a single parameter bm, which is a pointer to a BM_BufferPool structure representing a buffer pool handler.
+It returns the number of pages that have been read from disk since the buffer pool has been initialized.
+The implementation returns the value of rearIndex incremented by one. This is because rearIndex tracks the number of pages read from disk, and adding one accounts for starting the index from zero.
+**/
+extern int getNumReadIO (BM_BufferPool *const bm)
+{
+    int pageread = rearIndex + 1;
+	return pageread;
+}
+
+/**
+The getNumWriteIO function takes a single parameter bm, which is a pointer to a BM_BufferPool structure representing a buffer pool handler.
+It returns the number of write operations that have been performed since the buffer pool has been initialized.
+The implementation directly returns the value of writeCount, which tracks the number of write operations. 
+**/
+extern int getNumWriteIO (BM_BufferPool *const bm)
+{
+	return writeCount;
 }
