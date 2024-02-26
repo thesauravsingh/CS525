@@ -5,39 +5,110 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define RC_QUEUE_IS_EMPTY 5;
 #define RC_NO_FREE_BUFFER_ERROR 6;
 
-SM_FileHandle *fh;
-// bufferSize: Represents the maximum number of page frames that can be stored in the buffer pool.
-int bufferSize = 0;
-int rearIndex = 0;
-int writeCount = 0;
-int hit = 0;
-int clockPointer = 0;
-int lfuPointer = 0;
+
+typedef struct Page
+{
+	SM_PageHandle data; // Stores the actual data of the page.
+	PageNumber pageNum; // Represents a unique identification integer assigned to each page.
+	int dirtyBit; // Indicates whether the contents of the page have been modified by the client.
+	int fixCount; // Tracks the number of clients currently using that page.
+	int hitNum;   // Utilized by the Least Recently Used (LRU) algorithm to identify the least recently accessed page.	
+	int refNum;   // Employed by the Least Frequently Used (LFU) algorithm to identify the least frequently accessed page.
+} PageFrame;
+
+
+
 /** 
+bufferSize: Represents the maximum number of page frames that can be stored in the buffer pool.
+
 rearIndex: Stores the count of the number of pages read from the disk. It is also utilized by the FIFO function to calculate the frontIndex.
 
 writeCount: Counts the number of I/O writes to the disk, indicating the number of pages written to the disk.
 
-hit: Serves as a general counter incremented whenever a page frame is added to the buffer pool. It is employed by the LRU algorithm to determine the least recently added page in the buffer pool.
+hitCount: Serves as a general counter incremented whenever a page frame is added to the buffer pool. It is employed by the LRU algorithm to determine the least recently added page in the buffer pool.
 
 clockPointer: Used by the CLOCK algorithm to point to the last added page in the buffer pool.
 
 lfuPointer: Utilized by the LFU algorithm to store the position of the least frequently used page frame. It facilitates faster operations from the second replacement onwards.
 **/
+int bufferSize = 0;
+int rearIndex = 0;
+int writeCount = 0;
+int hitCount = 0;
+int clockPointer = 0;
+int lfuPointer = 0;
 
+SM_FileHandle *fh;
 
 RC pinPageLRU(BM_BufferPool * const bm, BM_PageHandle * const page,
 		const PageNumber pageNum);
 RC pinPageFIFO(BM_BufferPool *const bm, BM_PageHandle *const page,const PageNumber pageNum);
 
 
+extern void FIFO(BM_BufferPool *const bm, PageFrame *page){
 
+}
+// Declaring the Least Frequently Used function
+extern void LFU(BM_BufferPool *const bm, PageFrame *page) {
+    
+    PageFrame *pageFrame = (PageFrame *) bm->mgmtData;
 
+    int i, j, leastFreqIndex, leastFreqRef;
+    leastFreqIndex = lfuPointer;
 
+    // Iterate through all the page frames in the buffer pool
+    i = 0;
+    while (i < bufferSize && pageFrame[leastFreqIndex].fixCount != 0) {
+        leastFreqIndex = (leastFreqIndex + i) % bufferSize;
+        leastFreqRef = pageFrame[leastFreqIndex].refNum;
+        i++;
+    }
+
+    i = (leastFreqIndex + 1) % bufferSize;
+
+    // Find the page frame with the minimum refNum (i.e., the least frequently used page frame)
+    j = 0;
+    while (j < bufferSize) {
+        if (pageFrame[i].refNum < leastFreqRef) {
+            leastFreqIndex = i;
+            leastFreqRef = pageFrame[i].refNum;
+        }
+        i = (i + 1) % bufferSize;
+        j++;
+    }
+
+    // If the page in memory has been modified (dirtyBit = 1), write the page to disk	
+    if (pageFrame[leastFreqIndex].dirtyBit == 1) {
+        SM_FileHandle fh;
+        openPageFile(bm->pageFile, &fh);
+        writeBlock(pageFrame[leastFreqIndex].pageNum, &fh, pageFrame[leastFreqIndex].data);
+
+        // Increment the writeCount which records the number of writes done by the buffer manager.
+        writeCount++;
+    }
+
+    // Set the content of the page frame to the content of the new page
+    pageFrame[leastFreqIndex].data = page->data;
+    pageFrame[leastFreqIndex].pageNum = page->pageNum;
+    pageFrame[leastFreqIndex].dirtyBit = page->dirtyBit;
+    pageFrame[leastFreqIndex].fixCount = page->fixCount;
+    lfuPointer = leastFreqIndex + 1;
+}
+
+// Declaring the Least Recently Used function
+extern void LRU(BM_BufferPool *const bm, PageFrame *page){
+
+}
+
+// Declaring the CLOCK function
+extern void CLOCK(BM_BufferPool *const bm, PageFrame *page){
+
+}
 
 // Buffer Manager Interface Pool Handling
 extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName, const int numPages, ReplacementStrategy strategy,void *stratData)
