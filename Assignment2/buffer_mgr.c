@@ -1,11 +1,14 @@
-#include "buffer_mgr.h"
-#include "dberror.h"
-#include "storage_mgr.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
+
+#include "buffer_mgr.h"
+#include "dberror.h"
+#include "storage_mgr.h"
+
 
 #define RC_QUEUE_IS_EMPTY 5;
 #define RC_NO_FREE_BUFFER_ERROR 6;
@@ -40,25 +43,9 @@ int bufferSize = 0;
 int rearIndex = 0;
 int writeCount = 0;
 int hitCount = 0;
-int clockPointer = 0;
+int clock_pointer = 0;
 int lfuPointer = 0;
 
-SM_FileHandle *fh;
-
-RC pinPageLRU(BM_BufferPool * const bm, BM_PageHandle * const page,
-		const PageNumber pageNum);
-RC pinPageFIFO(BM_BufferPool *const bm, BM_PageHandle *const page,const PageNumber pageNum);
-
-
-// Function to open page file
-void openPageFile(const char *fileName, FILE *fileHandle) {
-    // Implementation of openPageFile function
-}
-
-// Function to write block to file
-void writeBlock(int pageNum, FILE *fileHandle, const char *data) {
-    // Implementation of writeBlock function
-}
 
 // Function to perform FIFO page replacement algorithm
 extern void FIFO(BM_BufferPool *const bm, PageFrame *page) {
@@ -146,11 +133,11 @@ extern void LRU(BM_BufferPool *const bufferPool, PageFrame *page) {
 
     // Find the least recently used page frame with fixCount = 0
     for(index = 0; index < bufferSize; index++) {
-        // Check if the current page frame has fixCount = 0 and its useCount is lower than the least recently used count
-        if(frames[index].fixCount == 0 && frames[index].useCount < leastRecentlyUsedCount) {
+        // Check if the current page frame has fixCount = 0 and its hitNum is lower than the least recently used count
+        if(frames[index].fixCount == 0 && frames[index].hitNum < leastRecentlyUsedCount) {
             // Update the index and count of the least recently used page frame
             leastRecentlyUsedIndex = index;
-            leastRecentlyUsedCount = frames[index].useCount;
+            leastRecentlyUsedCount = frames[index].hitNum;
         }
     }    
 
@@ -172,7 +159,7 @@ extern void LRU(BM_BufferPool *const bufferPool, PageFrame *page) {
         frames[leastRecentlyUsedIndex].pageNum = page->pageNum;
         frames[leastRecentlyUsedIndex].dirtyBit = page->dirtyBit;
         frames[leastRecentlyUsedIndex].fixCount = page->fixCount;
-        frames[leastRecentlyUsedIndex].useCount = page->useCount;
+        frames[leastRecentlyUsedIndex].hitNum = page->hitNum;
     } else {
         // No page frame available for replacement, handle accordingly
         printf("Buffer pool is full. Cannot perform LRU replacement.\n");
@@ -199,7 +186,7 @@ extern void CLOCK(BM_BufferPool *const bm, PageFrame *page)
                 writeBlock(pageFrame[clock_pointer].pageNum, &fh, pageFrame[clock_pointer].data);
 
                 // Increase the writeCount which records the number of writes done by the buffer manager.
-                write_count++;
+                writeCount++;
             }
 
             // Setting page frame's content to new page's content
@@ -447,7 +434,7 @@ PageNumber *allocateFrameContents(int bufferSize) {
 }
 
 // Function to get frame contents
-extern PageNumber *getFrameContents(BM_BufferPool *const bm, int bufferSize) {
+extern PageNumber *getFrameContents(BM_BufferPool *const bm) {
     PageNumber *frameContents = allocateFrameContents(bufferSize);
     PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
     
@@ -465,7 +452,7 @@ bool *allocateDirtyFlags(int bufferSize) {
 }
 
 // Function to get dirty flags
-extern bool *getDirtyFlags(BM_BufferPool *const bm, int bufferSize) {
+extern bool *getDirtyFlags(BM_BufferPool *const bm) {
     bool *dirtyFlags = allocateDirtyFlags(bufferSize);
     PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
     
