@@ -218,7 +218,7 @@ extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName
 {
         //valid inputs check
     if (bm == NULL || pageFileName == NULL || numPages <= 0) {
-        return RC_FILE_NOT_FOUND;
+        return RC_ERROR;
     }
 
     bm->pageFile = malloc(strlen(pageFileName) + 1);
