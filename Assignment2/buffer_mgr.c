@@ -137,9 +137,46 @@ extern void LFU(BM_BufferPool *const bm, PageFrame *page) {
     lfuPointer = leastFreqIndex + 1;
 }
 
-// Declaring the Least Recently Used function
-extern void LRU(BM_BufferPool *const bm, PageFrame *page){
+// Declaring LRU (Least Recently Used) function
+extern void LRU(BM_BufferPool *const bufferPool, PageFrame *page) {
+    // Cast the management data of buffer pool to page frames
+    PageFrame *frames = (PageFrame *)bufferPool->mgmtData;
+    // Initialize variables to track the least recently used page frame
+    int index, leastRecentlyUsedIndex = -1, leastRecentlyUsedCount = INT_MAX;
 
+    // Find the least recently used page frame with fixCount = 0
+    for(index = 0; index < bufferSize; index++) {
+        // Check if the current page frame has fixCount = 0 and its useCount is lower than the least recently used count
+        if(frames[index].fixCount == 0 && frames[index].useCount < leastRecentlyUsedCount) {
+            // Update the index and count of the least recently used page frame
+            leastRecentlyUsedIndex = index;
+            leastRecentlyUsedCount = frames[index].useCount;
+        }
+    }    
+
+    // If there's a page frame available for replacement
+    if(leastRecentlyUsedIndex != -1) {
+        // If the page in memory has been modified (dirtyBit = 1), write page to disk
+        if(frames[leastRecentlyUsedIndex].dirtyBit == 1) {
+            SM_FileHandle fileHandle;
+            // Open the page file associated with the buffer pool
+            openPageFile(bufferPool->pageFile, &fileHandle);
+            // Write the page to disk
+            writeBlock(frames[leastRecentlyUsedIndex].pageNum, &fileHandle, frames[leastRecentlyUsedIndex].data);
+            // Increase the writeCount which records the number of writes done by the buffer manager
+            writeCount++;
+        }
+        
+        // Update the page frame's content to the new page's content
+        frames[leastRecentlyUsedIndex].data = page->data;
+        frames[leastRecentlyUsedIndex].pageNum = page->pageNum;
+        frames[leastRecentlyUsedIndex].dirtyBit = page->dirtyBit;
+        frames[leastRecentlyUsedIndex].fixCount = page->fixCount;
+        frames[leastRecentlyUsedIndex].useCount = page->useCount;
+    } else {
+        // No page frame available for replacement, handle accordingly
+        printf("Buffer pool is full. Cannot perform LRU replacement.\n");
+    }
 }
 
 // Declaring the CLOCK function
