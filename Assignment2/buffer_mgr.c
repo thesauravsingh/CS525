@@ -218,12 +218,12 @@ extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName
 {
         //valid inputs check
     if (bm == NULL || pageFileName == NULL || numPages <= 0) {
-        return RC_INVALID_PARAMETER;
+        return RC_FILE_NOT_FOUND;
     }
 
     bm->pageFile = malloc(strlen(pageFileName) + 1);
     if (bm->pageFile == NULL) {
-        return RC_BUFFER_POOL_INIT_ERROR;
+        return RC_FILE_NOT_FOUND;
     }
     strcpy(bm->pageFile, pageFileName);
 
@@ -234,7 +234,7 @@ extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName
     PageFrame *pageFrames = malloc(sizeof(PageFrame) * numPages);
     if (pageFrames == NULL) {
         free(bm->pageFile);
-        return RC_BUFFER_POOL_INIT_ERROR;
+        return RC_FILE_NOT_FOUND;
     }
 
     // Initialize page frames
@@ -257,7 +257,7 @@ extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName
 extern RC shutdownBufferPool(BM_BufferPool *const bm)
 {
     if (bm == NULL || bm->mgmtData == NULL) {
-        return RC_BUFFER_POOL_NOT_INIT;
+        return RC_ERROR;
     }
 
     // Check if there are any pinned pages in the buffer
@@ -282,7 +282,7 @@ extern RC shutdownBufferPool(BM_BufferPool *const bm)
 extern RC forceFlushPool(BM_BufferPool *const bm)
 {
     if (bm == NULL || bm->mgmtData == NULL) {
-        return RC_BUFFER_POOL_NOT_INIT;
+        return RC_ERROR;
     }
 
     FILE *fp = fopen(bm->pageFile, "r+");  // Open the page file for both reading and writing
