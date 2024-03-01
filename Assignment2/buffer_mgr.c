@@ -58,7 +58,8 @@ extern void FIFO(BM_BufferPool *const bm, PageFrame *page) {
     for (int i = 0; i < bufferSize; i++) {
         if (pageFrame[frontIndex].fixCount == 0) {
             if (pageFrame[frontIndex].dirtyBit == 1) {
-                FILE *fileHandle;
+               // FILE *fileHandle;
+		SM_FileHandle fileHandle;   
                 openPageFile(bm->pageFile, &fileHandle);
                 writeBlock(pageFrame[frontIndex].pageNum, &fileHandle, pageFrame[frontIndex].data);
                 
