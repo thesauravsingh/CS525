@@ -221,7 +221,7 @@ extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName
     if (bm == NULL || pageFileName == NULL || numPages <= 0) {
         return RC_ERROR;
     }
-
+	bufferSize = numPages;	
     bm->pageFile = malloc(strlen(pageFileName) + 1);
     if (bm->pageFile == NULL) {
         return RC_FILE_NOT_FOUND;
@@ -257,29 +257,28 @@ extern RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName
 }
 extern RC shutdownBufferPool(BM_BufferPool *const bm)
 {
-    if (bm == NULL || bm->mgmtData == NULL) {
-        return RC_ERROR;
-    }
+    // Write all dirty pages (modified pages) back to disk
+    forceFlushPool(bm);
 
-    // Check if there are any pinned pages in the buffer
-    for (int i = 0; i < bm->numPages; i++) {
-        if (((PageFrame *)(bm->mgmtData))[i].fixCount > 0) {
+    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
+
+    // Check for pinned pages
+    for (int i = 0; i < bm->numPages; i++)
+    {
+        // If fixCount != 0, it means that the contents of the page were modified by some client and have not been written back to disk.
+        if (pageFrame[i].fixCount != 0)
+        {
             return RC_PINNED_PAGES_IN_BUFFER;
         }
     }
 
-    // Flush all dirty pages to disk before shutdown
-    forceFlushPool(bm);
-
-    // Free resources/memory space used by the buffer pool
-    free(((PageFrame *)(bm->mgmtData)));
-    free(bm->pageFile);
+    // Releasing space occupied by the page frames
+    free(pageFrame);
     bm->mgmtData = NULL;
-    bm->pageFile = NULL;
-    bm->numPages = 0;
 
     return RC_OK;
 }
+
 extern RC forceFlushPool(BM_BufferPool *const bm)
 {
     if (bm == NULL || bm->mgmtData == NULL) {
