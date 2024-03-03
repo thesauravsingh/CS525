@@ -47,36 +47,44 @@ int clock_pointer = 0;
 int lfuPointer = 0;
 
 
+
+
+
 // Function to perform FIFO page replacement algorithm
-extern void FIFO(BM_BufferPool *const bm, PageFrame *page) {
-    PageFrame *pageFrame = (PageFrame *)bm->mgmtData;
-    
-    //int bufferSize = BUFFER_SIZE; // Assuming bufferSize is available somewhere
-    
-    int frontIndex = 0;
-    
-    for (int i = 0; i < bufferSize; i++) {
-        if (pageFrame[frontIndex].fixCount == 0) {
-            if (pageFrame[frontIndex].dirtyBit == 1) {
-               // FILE *fileHandle;
-		SM_FileHandle fileHandle;   
-                openPageFile(bm->pageFile, &fileHandle);
-                writeBlock(pageFrame[frontIndex].pageNum, &fileHandle, pageFrame[frontIndex].data);
-                
-                // Increment write count or do other operations
-            }
-            
-            // Set page frame's content
-            pageFrame[frontIndex].data = page->data;
-            pageFrame[frontIndex].pageNum = page->pageNum;
-            pageFrame[frontIndex].dirtyBit = page->dirtyBit;
-            pageFrame[frontIndex].fixCount = page->fixCount;
-            break;
-        } else {
-            frontIndex++;
-            frontIndex = (frontIndex % bufferSize == 0) ? 0 : frontIndex;
-        }
-    }
+extern void FIFO(BM_BufferPool *const bm, PageFrame *page)
+{
+
+	PageFrame *pageFrame = (PageFrame *) bm->mgmtData;
+	
+	int i, frontIndex;
+	frontIndex = rearIndex % bufferSize;
+
+	for(i = 0; i < bufferSize; i++)
+	{
+		if(pageFrame[frontIndex].fixCount == 0)
+		{
+			if(pageFrame[frontIndex].dirtyBit == 1)
+			{
+				SM_FileHandle fh;
+				openPageFile(bm->pageFile, &fh);
+				writeBlock(pageFrame[frontIndex].pageNum, &fh, pageFrame[frontIndex].data);
+				
+				writeCount++;
+			}
+			
+			// Setting page frame's content 
+			pageFrame[frontIndex].data = page->data;
+			pageFrame[frontIndex].pageNum = page->pageNum;
+			pageFrame[frontIndex].dirtyBit = page->dirtyBit;
+			pageFrame[frontIndex].fixCount = page->fixCount;
+			break;
+		}
+		else
+		{
+			frontIndex++;
+			frontIndex = (frontIndex % bufferSize == 0) ? 0 : frontIndex;
+		}
+	}
 }
 // Declaring the Least Frequently Used function
 extern void LFU(BM_BufferPool *const bm, PageFrame *page) {
