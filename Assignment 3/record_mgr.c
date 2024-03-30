@@ -242,143 +242,119 @@ extern int getNumTuples (RM_TableData *rel)
 
 // ******** RECORD FUNCTIONS ******** //
 
-// This function inserts a new record in the table referenced by "rel" and updates the 'record' parameter with the Record ID of he newly inserted record
-extern RC insertRecord (RM_TableData *rel, Record *record)
-{
-	// Retrieving our meta data stored in the table
-	RecordManager *recordManager = rel->mgmtData;	
-	
-	// Setting the Record ID for this record
-	RID *recordID = &record->id; 
-	
-	char *data, *slotPointer;
-	
-	// Getting the size in bytes needed to store on record for the given schema
-	int recordSize = getRecordSize(rel->schema);
-	
-	// Setting first free page to the current page
-	recordID->page = recordManager->freePage;
+ // Function: insertRecord
+// Inserts a new record into the table and updates the 'record' parameter with the Record ID of the newly inserted record.
+extern RC insertRecord(RM_TableData *rel, Record *record) {
+    RecordManager *recordManager = rel->mgmtData;
+    RID *recordID = &record->id;
+    char *data, *slotPointer;
+    int recordSize = getRecordSize(rel->schema);
+    int freePageNum = recordManager->freePage;
+    BM_PageHandle *page = &recordManager->pageHandle;
+    BM_BufferPool *bm = &recordManager->bufferPool;
 
-	// Pinning page i.e. telling Buffer Manager that we are using this page
-	pinPage(&recordManager->bufferPool, &recordManager->pageHandle, recordID->page);
-	
-	// Setting the data to initial position of record's data
-	data = recordManager->pageHandle.data;
-	
-	// Getting a free slot using our custom function
-	recordID->slot = findFreeSlot(data, recordSize);
+    // Ensuring freePageNum is valid
+    if (freePageNum < 1) {
+        return RC_ERROR;
+    }
+    // Attempting to pin the page and validating it
+    if (pinPage(bm, page, freePageNum) != RC_OK) {
+        return RC_ERROR;
+    }
 
-	while(recordID->slot == -1)
-	{
-		// If the pinned page doesn't have a free slot then unpin that page
-		unpinPage(&recordManager->bufferPool, &recordManager->pageHandle);	
-		
-		// Incrementing page
-		recordID->page++;
-		
-		// Bring the new page into the BUffer Pool using Buffer Manager
-		pinPage(&recordManager->bufferPool, &recordManager->pageHandle, recordID->page);
-		
-		// Setting the data to initial position of record's data		
-		data = recordManager->pageHandle.data;
+    data = page->data;
 
-		// Again checking for a free slot using our custom function
-		recordID->slot = findFreeSlot(data, recordSize);
-	}
-	
-	slotPointer = data;
-	
-	// Mark page dirty to notify that this page was modified
-	markDirty(&recordManager->bufferPool, &recordManager->pageHandle);
-	
-	// Calculation slot starting position
-	slotPointer = slotPointer + (recordID->slot * recordSize);
+    //Update the page number in the recordID
+    recordID->page = freePageNum;
 
-	// Appending '+' as tombstone to indicate this is a new record and should be removed if space is lesss
-	*slotPointer = '+';
+    //Find a free slot and insert record
+    recordID->slot = findFreeSlot(data, recordSize);
 
-	// Copy the record's data to the memory location pointed by slotPointer
-	memcpy(++slotPointer, record->data + 1, recordSize - 1);
+    //If no free slot is available in current page, iterate over the pages to find free slot
+    while (recordID->slot == -1) {
+        unpinPage(bm, page);
+        recordID->page++;
+        pinPage(bm, page, recordID->page);
+        data = page->data;
+        recordID->slot = findFreeSlot(data, recordSize);
+    }
+    slotPointer = data;
+    //Marking the page as dirty
+    markDirty(bm, page);
 
-	// Unpinning a page i.e. removing a page from the BUffer Pool
-	unpinPage(&recordManager->bufferPool, &recordManager->pageHandle);
-	
-	// Incrementing count of tuples
-	recordManager->tuplesCount++;
-	
-	// Pinback the page	
-	pinPage(&recordManager->bufferPool, &recordManager->pageHandle, 0);
+    slotPointer += recordID->slot * recordSize;
 
-	return RC_OK;
+    *slotPointer = '+';
+
+    memcpy(++slotPointer, record->data + 1, recordSize - 1);
+    unpinPage(bm, page);
+
+    // Increment the count of tuples in record manager
+    recordManager->tuplesCount++;
+
+    // Pin the page again
+    pinPage(bm, page, 0);
+
+    return RC_OK;
 }
 
-// This function deletes a record having Record ID "id" in the table referenced by "rel"
-extern RC deleteRecord (RM_TableData *rel, RID id)
-{
-	// Retrieving our meta data stored in the table
-	RecordManager *recordManager = rel->mgmtData;
-	
-	// Pinning the page which has the record which we want to update
-	pinPage(&recordManager->bufferPool, &recordManager->pageHandle, id.page);
+//Function: deleteRecord
+// Deletes a record with the specified Record ID from the table.
 
-	// Update free page because this page 
-	recordManager->freePage = id.page;
-	
-	char *data = recordManager->pageHandle.data;
+extern RC deleteRecord(RM_TableData *rel, RID id) {
+    RecordManager *recordManager = rel->mgmtData;
+    BM_PageHandle *page = &recordManager->pageHandle;
+    BM_BufferPool *bm = &recordManager->bufferPool;
+    char *data;
+    int recordSize = getRecordSize(rel->schema);
 
-	// Getting the size of the record
-	int recordSize = getRecordSize(rel->schema);
+     // Attempting to pin the page and validating it
+    if (pinPage(bm, page, id.page) != RC_OK) {
+        return RC_ERROR;
+    }
 
-	// Setting data pointer to the specific slot of the record
-	data = data + (id.slot * recordSize);
-	
-	// '-' is used for Tombstone mechanism. It denotes that the record is deleted
-	*data = '-';
-		
-	// Mark the page dirty because it has been modified
-	markDirty(&recordManager->bufferPool, &recordManager->pageHandle);
+    // Updating the page number of free page
+    recordManager->freePage = id.page;
 
-	// Unpin the page after the record is retrieved since the page is no longer required to be in memory
-	unpinPage(&recordManager->bufferPool, &recordManager->pageHandle);
+    data = page->data + (id.slot * recordSize);
 
-	return RC_OK;
+    *data = '-';
+
+    //Marking the page as dirty
+    markDirty(bm, page);
+
+    unpinPage(bm, page);
+
+    return RC_OK;
 }
 
-// This function updates a record referenced by "record" in the table referenced by "rel"
-extern RC updateRecord (RM_TableData *rel, Record *record)
-{	
-	// Retrieving our meta data stored in the table
-	RecordManager *recordManager = rel->mgmtData;
-	
-	// Pinning the page which has the record which we want to update
-	pinPage(&recordManager->bufferPool, &recordManager->pageHandle, record->id.page);
+//Function: updateRecord
+// * Updates a record with the new data in the table.
 
-	char *data;
+extern RC updateRecord(RM_TableData *rel, Record *record) {
+    RecordManager *recordManager = rel->mgmtData;
+    BM_PageHandle *page = &recordManager->pageHandle;
+    BM_BufferPool *bm = &recordManager->bufferPool;
+    char *data;
+    int recordSize = getRecordSize(rel->schema);
 
-	// Getting the size of the record
-	int recordSize = getRecordSize(rel->schema);
+     //Attempting to pin the page and validating it
+    if (pinPage(bm, page, record->id.page) != RC_OK) {
+        return RC_ERROR;
+    }
 
-	// Set the Record's ID
-	RID id = record->id;
+    data = page->data + (record->id.slot * recordSize);
+    *data = '+';
+    memcpy(++data, record->data + 1, recordSize - 1);
 
-	// Getting record data's memory location and calculating the start position of the new data
-	data = recordManager->pageHandle.data;
-	data = data + (id.slot * recordSize);
-	
-	// '+' is used for Tombstone mechanism. It denotes that the record is not empty
-	*data = '+';
-	
-	// Copy the new record data to the exisitng record
-	memcpy(++data, record->data + 1, recordSize - 1 );
-	
-	// Mark the page dirty because it has been modified
-	markDirty(&recordManager->bufferPool, &recordManager->pageHandle);
+    //Marking the page as dirty
+    markDirty(bm, page);
 
-	// Unpin the page after the record is retrieved since the page is no longer required to be in memory
-	unpinPage(&recordManager->bufferPool, &recordManager->pageHandle);
-	
-	return RC_OK;	
+    unpinPage(bm, page);
+
+    return RC_OK;
 }
+
 
 // This function retrieves a record having Record ID "id" in the table referenced by "rel".
 // The result record is stored in the location referenced by "record"
