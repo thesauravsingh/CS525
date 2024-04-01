@@ -1,5 +1,41 @@
 1. TABLE AND RECORD MANAGER FUNCTIONS
 ------------------------------------------------------------------------------------
+1. `initialize_RecordManager(void *managementData)`
+ Description: Initializes the Record Manager module.
+ Parameters: 
+  - `managementData`: Pointer to management data.
+ Return Value: Returns `RC_OK` upon successful initialization.
+
+2. `shutdown_RecordManager()`
+- Description: Shuts down the Record Manager module and deallocates associated resources.
+- Return Value: Returns `RC_OK` upon successful shutdown.
+
+ 3. `create_Table(char *tableName, Schema *tableSchema)`
+- Description: Creates a table with the specified name and schema.
+- Parameters:
+  - `tableName`: Name of the table to be created.
+  - `tableSchema`: Pointer to the schema of the table.
+- Return Value: Returns `RC_OK` upon successful creation of the table.
+
+ 4. `open_Table(RM_TableData *tableData, char *tableName)`
+- Description: Opens a table with the specified name.
+- Parameters:
+  - `tableData`: Pointer to RM_TableData structure to store table information.
+  - `tableName`: Name of the table to be opened.
+- Return Value: Returns `RC_OK` upon successful opening of the table.
+
+ 5. `close_Table(RM_TableData *tableData)`
+- Description: Closes the table referenced by `tableData`.
+- Parameters:
+  - `tableData`: Pointer to RM_TableData structure representing the table to be closed.
+-Return Value:Returns `RC_OK` upon successful closing of the table.
+
+# Usage
+1. Call `initialize_RecordManager()` to initialize the Record Manager module before using any other functions.
+2. Create a table using `create_Table()` by providing the table name and schema.
+3. Open a table using `open_Table()` to perform operations on it.
+4. After finishing operations, close the table using `close_Table()` to release resources.
+
 6. deleteTable:
 Description: Deletes the table with the specified name.
 Procedure:
