@@ -1,3 +1,33 @@
+Running the Script
+---------------------------------------------------------------------------------------------
+1. Navigate to Project Root (`Assignment`) using Terminal:
+    cd path/to/Assignment 3
+2. List Files to Confirm Directory:
+    ls
+    *Verify that you are in the correct directory.
+
+3. Clean Old Compiled Files if any:
+    make clean
+    *Delete previously compiled `.o` files.
+
+4. Compile Project Files:
+    make
+    *Compile all project files, including `test_assign3_1.c`.
+
+5. Run `test_assign3_1.c` File:
+    make run
+    *Execute the `test_assign3_1.c` file.
+
+6. Compile Test Expression Files:
+    make test_expr
+    *Compile test expression-related files, including `test_expr.c`.
+
+7. Run `test_expr.c` File:
+    make run_expr
+    *Execute the `test_expr.c` file.
+
+
+
 1. TABLE AND RECORD MANAGER FUNCTIONS
 ------------------------------------------------------------------------------------
 1. `initialize_RecordManager(void *managementData)`
