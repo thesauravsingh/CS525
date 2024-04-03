@@ -1,170 +1,191 @@
-RUNNING THE SCRIPT
-=======================================
+Running the Script
+---------------------------------------------------------------------------------------------
+1. Navigate to Project Root (`Assignment`) using Terminal:
+    cd path/to/Assignment 3
+2. List Files to Confirm Directory:
+    ls
+    *Verify that you are in the correct directory.
 
-1) Go to Project root (assign3) using Terminal.
+3. Clean Old Compiled Files if any:
+    make clean
+    *Delete previously compiled `.o` files.
 
-2) Type ls to list the files and check that we are in the correct directory.
+4. Compile Project Files:
+    make
+    *Compile all project files, including `test_assign3_1.c`.
 
-3) Type "make clean" to delete old compiled .o files.
+5. Run `test_assign3_1.c` File:
+    make run
+    *Execute the `test_assign3_1.c` file.
 
-4) Type "make" to compile all project files including "test_assign3_1.c" file 
+6. Compile Test Expression Files:
+    make test_expr
+    *Compile test expression-related files, including `test_expr.c`.
 
-5) Type "make run" to run "test_assign3_1.c" file.
-
-6) Type "make test_expr" to compile test expression related files including "test_expr.c".
-
-7) Type "make run_expr" to run "test_expr.c" file.
+7. Run `test_expr.c` File:
+    make run_expr
+    *Execute the `test_expr.c` file.
 
 
-SOLUTION DESCRIPTION
-=======================================
-
-MakeFile was made using following tutorial -
-http://mrbook.org/blog/tutorials/make/
-
-We have ensured proper memory management while making this record manager by freeing any reserved space wherever possible and minimizing the use of variables as much as possible. Along with the functions declared in record_mgr.h, we have also mplemented the Tombstone mechanism.
 
 1. TABLE AND RECORD MANAGER FUNCTIONS
-=======================================
+------------------------------------------------------------------------------------
+1. `initialize_RecordManager(void *managementData)`
+ Description: Initializes the Record Manager module.
+ Parameters: 
+  - `managementData`: Pointer to management data.
+ Return Value: Returns `RC_OK` upon successful initialization.
 
-The record manager related functions are used to initialize and shutdown the record manager. The table related functions are used to create, open, close and delete a table. We make the use of Buffer Manager (Assignment 2) to access pages via Buffer Pool using a page replacement policy. Also, the Storage Manager (Assignment 1) is used indirectly to perform operations on page file on disk.
+2. `shutdown_RecordManager()`
+- Description: Shuts down the Record Manager module and deallocates associated resources.
+- Return Value: Returns `RC_OK` upon successful shutdown.
 
-initRecordManager (...)
---> This function initializes the record manager.
---> We call initStorageManager(...) function of Storage Manager to initialize the storage manager. 
+ 3. `create_Table(char *tableName, Schema *tableSchema)`
+- Description: Creates a table with the specified name and schema.
+- Parameters:
+  - `tableName`: Name of the table to be created.
+  - `tableSchema`: Pointer to the schema of the table.
+- Return Value: Returns `RC_OK` upon successful creation of the table.
 
-shutdownRecordManager(...)
---> This function shutsdown the record manager and de-allocates all the resources allocated to the record manager.
---> It free up all resources/memory space being used by the Record Manager.
---> We set the recordManager data structure pointer to NULL and call C function free() to de-allocate memory space
+ 4. `open_Table(RM_TableData *tableData, char *tableName)`
+- Description: Opens a table with the specified name.
+- Parameters:
+  - `tableData`: Pointer to RM_TableData structure to store table information.
+  - `tableName`: Name of the table to be opened.
+- Return Value: Returns `RC_OK` upon successful opening of the table.
 
-createTable(...)
---> This function opens the table having name specified by the paramater 'name.
---> It initializes the Buffer Pool by calling initBufferPool(...). We use LRU page replacment policy.
---> It initializes all the values of the table and also sets the attributes (name, datatype and size) of the table.
---> It then creates a page file, opens that page file, writes the block containing the table in the page file and closes the page file.
+ 5. `close_Table(RM_TableData *tableData)`
+- Description: Closes the table referenced by `tableData`.
+- Parameters:
+  - `tableData`: Pointer to RM_TableData structure representing the table to be closed.
+-Return Value:Returns `RC_OK` upon successful closing of the table.
 
-openTable(...)
---> This function creates a table with name as specified in the parameter 'name' in the schema specified in the parameter 'schema'.
---> It 
+# Usage
+1. Call `initialize_RecordManager()` to initialize the Record Manager module before using any other functions.
+2. Create a table using `create_Table()` by providing the table name and schema.
+3. Open a table using `open_Table()` to perform operations on it.
+4. After finishing operations, close the table using `close_Table()` to release resources.
 
-closeTable(...)
---> This function closes the table as pointed by the parameter 'rel'.
---> It does so by calling BUffer Manager's function shutdownBufferPool(...).
---> Before shutting the buffer pool, the buffer manager writes the changes made to the table in the page file.
+6. deleteTable:
+Description: Deletes the table with the specified name.
+Procedure:
+Removes the page file associated with the table from memory using the storage manager.
 
-deleteTable(...)
---> This function deletes the table with name specified by the parameter 'name'.
---> It calls the Storage Manager's function destroyPageFile(...).
---> destroyPageFile(...) function deletes the page from disk and de-allocates ane memory space allocated for that mechanism.
-
-getNumTuples(...)
---> This function returns the number of tuples in the table referenced by parameter 'rel'.
---> It returns the value of the variable [tuplesCount] which is defined in our custom data structure which we use for storing table's meta-data.
-
+7. getNumTuples:
+Description: Returns the number of tuples (records) in the table.
+Procedure:
+Accesses the tuples count from the data structure and returns it.
 
 2. RECORD FUNCTIONS
-=======================================
+-------------------------------------------------------------------------------------
+1. insertRecord:
+Description: Inserts a new record into the table at the specified location.
+Procedure:
+Pins the page where the record will be inserted.
+Finds an available slot within the page.
+Marks the page as dirty after insertion.
+Unpins the page.
 
-These functions are used to retrieve a record with a certain RID, to delete a record with a certain RID, to insert a new record, and to update an existing record with new values.
+2. deleteRecord:
+Description: Deletes a record from the table at the specified location.
+Procedure:
+Pins the page containing the record to be deleted.
+Marks the page as dirty after deletion.
+Unpins the page.
 
-insertRecord(...)
---> This function inserts a record in the table and updates the 'record' parameter with the Record ID passed in the insertRecord() function.
---> We set the Record ID for the record being inserted.
---> We pin the page which has an empty slot. Once we get an empty slot, we locate the data pointer and add a '+' to denote that this is a newly added record.
---> Also we mark the page dirty so that the Buffer Manager writes the content the page back to the disk.
---> We copy the record's data (passed through parameter 'record') into the new record using memcpy() C function and then unpin the page.
-
-deleteRecord(...)
---> This function deletes a record having Record ID 'id' passed through the parameter from the table referenced by the parameter 'rel'.
---> We set our table's meta-data freePage to the Page ID of this page whose record is to be deleted so that this space can be used by a new record later.
---> We pin the page and navigate to the data pointer of the record and set the first character to '-' which denotes that this record is deleted and no longer needed.
---> Finally, we mark the page dirty so that the BUffer Manager can save the contents of the page back to disk and then we unpin the page.
-
-updateRecord(...)
---> This function updates a record referenced by the parameter "record" in the table referenced by the parameter "rel".
---> It finds the page where the record is located by table's meta-data and pins that page in the buffer pool.
---> It sets the Record ID, navigates to the location where the record's data is stored.
---> We copy the record's data (passed through parameter 'record') into the new record using memcpy() C function, mark the page dirty and then unpin the page.
-
-getRecord(....)
---> This function retrieves a record having Record ID "id" passed in the paramater in the table referenced by "rel" which is also passed in the parameter. The result record is stored in the location referenced by the parameter "record".
---> It finds the page where the record is located by table's meta-data and using the 'id' of the record, it pins that page in the buffer pool.
---> It sets the Record ID of the 'record' parameter with the id of the record which exists in the page and copies the data too.
---> It then unpins the page.
-
+3. updateRecord:
+Description: Updates an existing record in the table at the specified location.
+Procedure:
+Pins the page containing the record to be updated.
+Marks the page as dirty after update.
+Unpins the page.
 
 3. SCAN FUNCTIONS
-=======================================
-
-The Scan related functions are used to retreieve all tuples from a table that fulfill a certain condition (represented as an Expr). Starting a scan initializes the RM_ScanHandle data structure passed as an argument to startScan. Afterwards, calls to the next method is made which returns the next tuple that fulfills the scan condition. If NULL is passed as a scan condition, it returns RC_SCAN_CONDITION_NOT_FOUND. next returns RC_RM_NO_MORE_TUPLES once the scan is completed and RC_OK otherwise (unless an error occurs).
-
-startScan(...)
---> This function starts a scan by getting data from the RM_ScanHandle data structure which is passed as an argument to startScan() function.
---> We initialize our custom data structure's scan related variables.
---> If condition iS NULL, we return error code RC_SCAN_CONDITION_NOT_FOUND
-
-next(...)
---> This function returns the next tuple which satisfies the condition (test expression).
---> If condition iS NULL, we return error code RC_SCAN_CONDITION_NOT_FOUND
---> If there are no tuples in the table, we return error code RC_RM_NO_MORE_TUPLES
---> We iterate through the tuples in the table. Pin the page having that tuple, navigate to the location where data is stored, copy data into a temporary buffer and then evaluate the test expression by calling eval(....)
---> If the result (v.boolV) of the test expression is TRUE, it means the tuple fulfills the condition. We then unpin the page and return RC_OK
---> If none of the tuples fulfill the condition, then we return error code RC_RM_NO_MORE_TUPLES
-
-closeScan(...) 
---> his function closes the scan operation.
---> We check if the scan was incomplete by checking the scanCount value of the table's metadata. If it is greater than 0, it means the scan was incomplete.
---> If the scan was incomplete, we unpin the page and reset all scan mechanism related variables in our table's meta-data (custom data structure).
---> We then free (de-allocate) the space occupied by the metadata.
+--------------------------------------------------------------------------------------
 
 
 4. SCHEMA FUNCTIONS
-=========================================
-
-These functions are used to return the size in bytes of records for a given schema and create a new schema. 
-
-getRecordSize(...)
---> This function returns the size of a record in the specified schema.
---> We iterate through the attributes of the schema. We iteratively add the size (space in bytes) required by each attribute to the variable 'size'. 
---> The value of the variable 'size' is the size of the record.
-
-freeSchema(...)
---> This function removes the schema specified by the parameter 'schema' from the memory.
---> The variable (field) refNum in each page frame serves this purpose. refNum keeps a count of of the page frames being accessed by the client.
---> We use the C function free(...) to de-allocate the memory space occupied by the schema, thereby removing it from the memory.
-
-createSchema(...)
---> This function create a new schema with the specified parameters in memory.
---> numAttr specifies the number of parameters. attrNames specifies the name of the attributes. datatypes specifies the datatype of the attributes. typeLength specifies the length of the attribute (example: length of STRING).
---> We create a schema object and allocate memory space to the object. We finally set te schema's parameters to the parameters passed in the createSchema(...)
+--------------------------------------------------------------------------------------
 
 
 5. ATTRIBUTE FUNCTIONS
-=========================================
+--------------------------------------------------------------------------------------
+2. createSchema
+Description:Creates a schema object with specified attributes, data types, and keys.
+Procedure:
+Allocate memory space for a `Schema` structure using the `malloc` function, ensuring space equal to the size of a `Schema` structure.
+Set the `numAttr` field of the schema to the provided `numAttr`.
+Set the `attrNames` field of the schema to the provided `attrNames`.
+Specify the data types for the attributes in the schema using the provided `dataTypes`.
+Define the length of data types, especially for strings, in the schema using the provided `typeLength`.
+Determine the size of the key in the schema using the provided `keySize`.
+Define the attributes that constitute the key in the schema using the provided `keys`.
+Return the created schema.
 
-These functions are used to get or set the attribute values of a record and create a new record for a given schema. Creating a new record should allocate enough memory to the data field to hold the binary representations for all attributes of this record as determined by the schema.  
+3. freeSchema
+Description:Removes a schema from memory and releases the occupied memory space.
+Procedure:
+Deallocate the memory space occupied by the `schema` variable using the `free` function.
+Return a success status code (`RC_OK`) indicating that the operation was completed successfully.
 
-createRecord(...)
---> This function creates a new record in the schema passed by parameter 'schema' and passes the new record to the 'record' paramater in the createRecord() function.
---> We allocate proper memory space to the new record. Also we give memory space for the data of the record which is the record size.
---> Also, we add a '-' to the first position and append '\0' which NULL in C. '-' denotes that this is a new blank record.
---> Finally, we assign this new record to the 'record' passed through the parameter.
+5. ATTRIBUTE FUNCTIONS
+--------------------------------------------------------------------------------------
 
-attrOffset(...)
---> This function sets the offset (in bytes) from initial position to the specified attribute of the record into the 'result' parameter passed through the function.
---> We iterate through the attributes of the schema till the specified attribute number. We iteratively add the size (space in bytes) required by each attribute to the pointer *result. 
+1. createRecord
+Description:Creates a new record based on the provided schema.
+Procedure:
+Allocate memory space for a new record using `malloc` function, ensuring space equal to the size of a `Record` structure.
+Calculate the size of the record based on the provided schema using the `getRecordSize` function.
+Allocate memory space for the data of the new record based on the calculated record size.
+Initialize the page and slot position of the new record as -1 to indicate it's a new record with an unknown position.
+Set the first character of the record's data to '-' as part of a Tombstone mechanism indicating that the record is empty.
+Append '\0' (NULL character) to the record's data after the Tombstone character.
+Assign the newly created record to the pointer passed as an argument.
+Return an OK status to indicate that the record creation was successful.
 
-freeRecord(...)
---> This function de-allocates the memory space allocated to the 'record' passed through the parameter.
---> We use the C function free() to de-allocate the memory space (free up space) used by the record.
+2. attrOffset
+Description:Sets the offset (in bytes) from the initial position to the specified attribute of the record into the 'result' parameter.
+Procedure:
+Initialize a counter variable `i` to 0 and set the `result` parameter to 1.
+Iterate through each attribute in the schema until reaching the specified attribute number `attrNum`.
+For each attribute, check its data type using `if-else` statements:
+   - If the attribute is of type STRING, add its defined length (`typeLength`) to the `result`.
+   - If the attribute is of type INTEGER, add the size of an integer (`sizeof(int)`) to the `result`.
+   - If the attribute is of type FLOAT, add the size of a float (`sizeof(float)`) to the `result`.
+   - If the attribute is of type BOOLEAN, add the size of a boolean (`sizeof(bool)`) to the `result`.
+Increment the counter `i` to move to the next attribute in the schema.
+Once all attributes up to the specified one have been processed, return RC_OK.
 
-getAttr(...)
---> This function retrieves an attribute from the given record in the specified schema.
---> The record, schema and attribute number whose data is to be retrieved is passed through the parameter. The attribute details are stored back to the location referenced by 'value' passed through the parameter.
---> We go to the location of the attribute using the attrOffset(...) function. We then depending on the datatype of the attribute, copy the attribute's datatype and value to the '*value' parameter.
+3. freeRecord
+Description:Deallocates the memory used by a record.
+Procedure:
+Free the memory space previously allocated to the record using the `free` function.
+Return the status code indicating successful execution.
 
-setAttr(...)
---> This function sets the attribute value in the record in the specified schema. The record, schema and attribute number whose data is to be retrieved is passed through the parameter.
---> The data which are to be stored in the attribute is passed by 'value' parameter.
---> We go to the location of the attribute using the attrOffset(...) function. We then depending on the datatype of the attribute, copy the data in the '*value' parameter to the attributes datatype and value both.
+4. getAttr
+Description:Retrieves an attribute from the given record in the specified schema.
+Procedure:
+Calculate the offset value of attributes based on the attribute number using the `attrOffset` function.
+Allocate memory space for the `Value` data structure where the attribute values will be stored.
+Determine the starting position of the record's data in memory.
+Add the calculated offset to the starting position.
+Retrieve the attribute's value depending on its data type:
+   - For STRING attributes, copy the string from the location pointed by `dataPointer` and append '\0' to denote the end of the string in C.
+   - For INTEGER attributes, copy the integer value from `dataPointer`.
+   - For FLOAT attributes, copy the float value from `dataPointer`.
+   - For BOOLEAN attributes, copy the boolean value from `dataPointer`.
+Set the pointer to the attribute value.
+Return RC_OK.
+
+5. setAttr
+Description:Sets the attribute value in the record in the specified schema.
+Procedure:
+Calculate the offset value based on the attribute number using the `attrOffset` function.
+Get the starting position of the record's data in memory.
+Add the offset to the starting position.
+Check the data type of the attribute and set its value accordingly:
+   - For STRING attributes, copy the attribute's value to the location pointed by the record's data.
+   - For INTEGER attributes, set the attribute value.
+   - For FLOAT attributes, set the attribute value.
+   - For BOOLEAN attributes, set the attribute value.
+Return RC_OK.
