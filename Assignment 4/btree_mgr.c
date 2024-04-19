@@ -19,7 +19,8 @@ BTree *root;
 BTree *scan;
 int indexNum = 0;
 
-// init and shutdown index manager
+// Index Manager
+// Initialization and Shutdown
 RC initIndexManager(void *mgmtData)
 {
     return RC_OK;
@@ -33,19 +34,16 @@ RC shutdownIndexManager()
 // create, destroy, open, and close a B-tree index
 RC createBtree(char *idxId, DataType keyType, int n)
 {
-    int i = 0;
-
     // Allocate memory for the root node
-    root = (BTree *)malloc(sizeof(BTree));
-    root->key = malloc(sizeof(int) * (n - 1)); // Change to (n-1) for a B-tree
+    root = malloc(sizeof(BTree));
+    root->key = malloc(sizeof(int) * (n - 1));
     root->id = malloc(sizeof(RID) * n);
-    root->children = malloc(sizeof(BTree *) * n); // Change to (n) for a B-tree
+    root->children = malloc(sizeof(BTree *) * n);
 
-    // Initialize child pointers to NULL using a do-while loop
-    do {
+    // Initialize child pointers to NULL
+    for (int i = 0; i < n; i++) {
         root->children[i] = NULL;
-        ++i;
-    } while (i < n);
+    }
 
     // Set the maximum number of elements
     maxEle = n;
@@ -56,19 +54,23 @@ RC createBtree(char *idxId, DataType keyType, int n)
     return RC_OK;
 }
 
-
 RC openBtree(BTreeHandle **tree, char *idxId)
 {
-    return (openPageFile(idxId, &btree_fh) == 0) ? RC_OK : RC_ERROR;
+    return (openPageFile(idxId, &btree_fh) == 0)? RC_OK : RC_ERROR;
 }
+
 RC closeBtree(BTreeHandle *tree)
 {
-    return (closePageFile(&btree_fh) != 0) ? RC_ERROR : (free(root), RC_OK);
+    if (closePageFile(&btree_fh)!= 0) {
+        return RC_ERROR;
+    }
+    free(root);
+    return RC_OK;
 }
 
 RC deleteBtree(char *idxId)
 {
-    return (destroyPageFile(idxId) == 0) ? RC_OK : RC_ERROR;
+    return (destroyPageFile(idxId) == 0)? RC_OK : RC_ERROR;
 }
 
 
@@ -266,53 +268,64 @@ RC deleteKey(BTreeHandle *tree, Value *key)
 
 
 
-//
+//Opens a scan on the B-tree for sequential access.
 RC openTreeScan(BTreeHandle *tree, BT_ScanHandle **handle)
 {
+    // Allocate memory for the scan handle
     scan = (BTree *)malloc(sizeof(BTree));
+    // Set the scan handle to the root of the tree
     scan = root;
+    // Initialize index number
     indexNum = 0;
 
+    // Allocate memory for temporary BTree node
     BTree *temp = (BTree *)malloc(sizeof(BTree));
     int totalEle = 0, i;
     
+    // Set the temporary node to the root of the tree
     temp = root;
-    do {
+    // Count total elements in the tree
+    while (temp != NULL) {
         i = 0;
-        do {
+        while (i < maxEle) {
             if (temp->key[i] != 0) {
                 totalEle++;
             }
             i++;
-        } while (i < maxEle);
+        }
+        // Move to the next child node
         temp = temp->children[maxEle];
-    } while (temp != NULL);
+    }
 
+    // Declare arrays based on the total number of elements
     int key[totalEle];
     int elements[maxEle][totalEle];
     int count = 0;
 
+    // Set the temporary node to the root of the tree
     temp = root;
-    do {
+    // Populate key and elements arrays with node values
+    while (temp != NULL) {
         i = 0;
-        do {
+        while (i < maxEle) {
             key[count] = temp->key[i];
             elements[0][count] = temp->id[i].page;
             elements[1][count] = temp->id[i].slot;
             count++;
             i++;
-        } while (i < maxEle);
+        }
+        // Move to the next child node
         temp = temp->children[maxEle];
-    } while (temp != NULL);
+    }
 
     int swap;
     int pg, st, c, d;
     c = 0;
-    do {
+    // Sort the key array and corresponding elements arrays
+    while (c < count - 1) {
         d = 0;
-        do {
-            if (key[d] > key[d + 1])
-            {
+        while (d < count - c - 1) {
+            if (key[d] > key[d + 1]) {
                 swap = key[d];
                 pg = elements[0][d];
                 st = elements[1][d];
@@ -326,46 +339,65 @@ RC openTreeScan(BTreeHandle *tree, BT_ScanHandle **handle)
                 elements[1][d + 1] = st;
             }
             d++;
-        } while (d < count - c - 1);
+        }
         c++;
-    } while (c < count - 1);
+    }
 
     count = 0;
 
+    // Set the temporary node to the root of the tree
     temp = root;
-    do {
+    // Update the tree nodes with sorted values
+    while (temp != NULL) {
         i = 0;
-        do {
+        while (i < maxEle) {
             temp->key[i] = key[count];
             temp->id[i].page = elements[0][count];
             temp->id[i].slot = elements[1][count];
             count++;
             i++;
-        } while (i < maxEle);
-        temp = temp->children[maxEle];
-    } while (temp != NULL);
-
-    return RC_OK;
-}
-
-RC nextEntry (BT_ScanHandle *handle, RID *result)
-{
-    if(scan->children[maxEle] != NULL) {
-        if(maxEle == indexNum) {
-            indexNum = 0;
-            scan = scan->children[maxEle];
         }
-
-        (*result).page = scan->id[indexNum].page;
-        (*result).slot = scan->id[indexNum].slot;
-        indexNum ++;
+        // Move to the next child node
+        temp = temp->children[maxEle];
     }
-    else
-        return RC_IM_NO_MORE_ENTRIES;
-    
+
     return RC_OK;
 }
 
+//Retrieves the next entry (key-RID pair) during a scan on the B-tree.
+RC nextEntry(BT_ScanHandle *handle, RID *result)
+{
+    // Check if scan->children[maxEle] is not NULL
+    switch (scan->children[maxEle] != NULL) {
+        case 1: // If not NULL
+            // Check if maxEle is equal to indexNum
+            switch (maxEle == indexNum) {
+                case 1: // If equal
+                    // Reset indexNum to 0
+                    indexNum = 0;
+                    // Move to the next level in the tree
+                    scan = scan->children[maxEle];
+                    break;
+                case 0: // If not equal
+                    break; // Do nothing
+            }
+
+            // Set result page and slot to current indexNum values
+            (*result).page = scan->id[indexNum].page;
+            (*result).slot = scan->id[indexNum].slot;
+            // Increment indexNum
+            indexNum++;
+            break;
+        case 0: // If NULL
+            // Return no more entries error
+            return RC_IM_NO_MORE_ENTRIES;
+    }
+    
+    // Return OK
+    return RC_OK;
+}
+
+//Closes an active scan on the B-tree
 RC closeTreeScan (BT_ScanHandle *handle)
 {
     indexNum = 0;
@@ -373,7 +405,7 @@ RC closeTreeScan (BT_ScanHandle *handle)
 }
 
 
-// debug and test functions
+// Debugging function to print the contents of the B-tree.
 char *printTree (BTreeHandle *tree)
 {
     return RC_OK;
