@@ -116,7 +116,7 @@ RC getNumEntries(BTreeHandle *tree, int *result)
     return RC_OK;
 }
 
-
+//
 RC getKeyType (BTreeHandle *tree, DataType *result)
 {
     return RC_OK;
@@ -126,56 +126,67 @@ RC getKeyType (BTreeHandle *tree, DataType *result)
 // index access
 RC findKey(BTreeHandle *tree, Value *key, RID *result)
 {
+    // Allocate memory for temporary B-tree node
     BTree *temp = (BTree *)malloc(sizeof(BTree));
     int found = 0, i;
 
+    // Initialize temp as the root node
     temp = root;
-    do {
-        i = 0;
-        while (i < maxEle) {
+    // Loop through the B-tree nodes
+    while (temp != NULL) {
+        // Loop through the keys in the current node
+        for (i = 0; i < maxEle; i++) {
+            // If the key is found, update the result and set found to 1
             if (temp->key[i] == key->v.intV) {
                 result->page = temp->id[i].page;
                 result->slot = temp->id[i].slot;
                 found = 1;
                 break;
             }
-            i++;
         }
+        // Move to the next child node
         temp = temp->children[maxEle];
+        // If the key is found, break out of the loop
         if (found == 1)
             break;
-    } while (temp != NULL);
+    }
 
     // free(temp); // Assuming you want to free the allocated memory for temp
 
+    // Return appropriate status based on whether the key is found or not
     if (found == 1)
         return RC_OK;
     else
         return RC_IM_KEY_NOT_FOUND;
 }
 
+
+// Function to insert a key into a B-tree
 RC insertKey(BTreeHandle *tree, Value *key, RID rid)
 {
-    int i = 0;
+    // Allocate memory for temporary B-tree nodes
     BTree *temp = (BTree *)malloc(sizeof(BTree));
     BTree *node = (BTree *)malloc(sizeof(BTree));
+    // Allocate memory for key, ID, and children arrays in the new node
     node->key = malloc(sizeof(int) * maxEle);
     node->id = malloc(sizeof(RID) * maxEle);
     node->children = malloc(sizeof(BTree) * (maxEle + 1));
 
-    i = 0;
-    do {
+    // Initialize key array in the new node with zeros
+    for (int i = 0; i < maxEle; i++) {
         node->key[i] = 0;
-        i++;
-    } while (i < maxEle);
+    }
 
     int nodeFull = 0;
 
+    // Initialize temp as the root node
     temp = root;
-    do {
+    // Loop through the B-tree nodes
+    while (temp != NULL) {
         nodeFull = 0;
-        i = 0;
-        do {
+        // Loop through the keys in the current node
+        for (int i = 0; i < maxEle; i++) {
+            // If the current key slot is empty, insert the key and ID
             if (temp->key[i] == 0) {
                 temp->id[i].page = rid.page;
                 temp->id[i].slot = rid.slot;
@@ -184,30 +195,30 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
                 nodeFull++;
                 break;
             }
-            i++;
-        } while (i < maxEle);
+        }
 
+        // If the current node is full and doesn't have a child, link the new node
         if ((nodeFull == 0) && (temp->children[maxEle] == NULL)) {
             node->children[maxEle] = NULL;
             temp->children[maxEle] = node;
         }
 
         temp = temp->children[maxEle];
-    } while (temp != NULL);
+    }
 
     int totalEle = 0;
+    // Count the total number of elements in the B-tree
     temp = root;
-    do {
-        i = 0;
-        do {
+    while (temp != NULL) {
+        for (int i = 0; i < maxEle; i++) {
             if (temp->key[i] != 0) {
                 totalEle++;
             }
-            i++;
-        } while (i < maxEle);
+        }
         temp = temp->children[maxEle];
-    } while (temp != NULL);
+    }
 
+    // If the B-tree reaches a certain number of elements, perform a split operation
     if (totalEle == 6) {
         node->key[0] = root->children[maxEle]->key[0];
         node->key[1] = root->children[maxEle]->children[maxEle]->key[0];
@@ -219,12 +230,21 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
     return RC_OK;
 }
 
-RC deleteKey (BTreeHandle *tree, Value *key)
+
+// Function to delete a key from a B-tree
+RC deleteKey(BTreeHandle *tree, Value *key)
 {
+    // Allocate memory for temporary B-tree node
     BTree *temp = (BTree*)malloc(sizeof(BTree));
-    int found = 0, i;
-    for (temp = root; temp != NULL; temp = temp->children[maxEle]) {
-        for (i = 0; i < maxEle; i ++) {
+    // Initialize variables
+    int found = 0, i = 0; // Initialize i here
+    temp = root; // Initialize temp outside the loop
+    
+    // Loop through the B-tree nodes
+    while (temp != NULL && !found) { // Change for loop to while loop
+        // Loop through the keys in the current node
+        while (i < maxEle) { // Change for loop to while loop
+            // If the key is found, remove it
             if (temp->key[i] == key->v.intV) {
                 temp->key[i] = 0;
                 temp->id[i].page = 0;
@@ -232,15 +252,20 @@ RC deleteKey (BTreeHandle *tree, Value *key)
                 found = 1;
                 break;
             }
+            i++; // Increment i here
         }
-        if (found == 1)
-            break;
+        temp = temp->children[maxEle];
+        i = 0; // Reset i here
     }
     
-
+    // Free the allocated memory
+    free(temp);
+    // Return success status
     return RC_OK;
 }
 
+
+//
 RC openTreeScan(BTreeHandle *tree, BT_ScanHandle **handle)
 {
     scan = (BTree *)malloc(sizeof(BTree));
