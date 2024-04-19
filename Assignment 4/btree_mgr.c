@@ -126,34 +126,33 @@ RC getKeyType (BTreeHandle *tree, DataType *result)
 // index access
 RC findKey(BTreeHandle *tree, Value *key, RID *result)
 {
-    // Allocate memory for temporary B-tree node
     BTree *temp = (BTree *)malloc(sizeof(BTree));
     int found = 0, i;
 
-    // Initialize temp as the root node
     temp = root;
-    // Loop through the B-tree nodes
-    while (temp != NULL) {
-        // Loop through the keys in the current node
+    // Traverse the B-tree until the key is found or no more nodes to explore
+    do {
+        // Search for the key in the current node
         for (i = 0; i < maxEle; i++) {
-            // If the key is found, update the result and set found to 1
             if (temp->key[i] == key->v.intV) {
+                // If key is found, set the result and exit the loop
                 result->page = temp->id[i].page;
                 result->slot = temp->id[i].slot;
                 found = 1;
                 break;
             }
         }
-        // Move to the next child node
+        // Move to the next node
         temp = temp->children[maxEle];
-        // If the key is found, break out of the loop
+        // If key is found, exit the loop
         if (found == 1)
             break;
-    }
+    } while (temp != NULL);
 
+    // Free dynamically allocated memory (if necessary)
     // free(temp); // Assuming you want to free the allocated memory for temp
 
-    // Return appropriate status based on whether the key is found or not
+    // Return appropriate status based on whether the key was found or not
     if (found == 1)
         return RC_OK;
     else
@@ -161,33 +160,32 @@ RC findKey(BTreeHandle *tree, Value *key, RID *result)
 }
 
 
+
 // Function to insert a key into a B-tree
 RC insertKey(BTreeHandle *tree, Value *key, RID rid)
 {
-    // Allocate memory for temporary B-tree nodes
+    int i = 0;
     BTree *temp = (BTree *)malloc(sizeof(BTree));
     BTree *node = (BTree *)malloc(sizeof(BTree));
-    // Allocate memory for key, ID, and children arrays in the new node
     node->key = malloc(sizeof(int) * maxEle);
     node->id = malloc(sizeof(RID) * maxEle);
     node->children = malloc(sizeof(BTree) * (maxEle + 1));
 
-    // Initialize key array in the new node with zeros
-    for (int i = 0; i < maxEle; i++) {
+    // Initialize node's key array to 0
+    for (i = 0; i < maxEle; i++) {
         node->key[i] = 0;
     }
 
     int nodeFull = 0;
 
-    // Initialize temp as the root node
     temp = root;
-    // Loop through the B-tree nodes
+    // Traverse the B-tree until a suitable position is found
     while (temp != NULL) {
         nodeFull = 0;
-        // Loop through the keys in the current node
-        for (int i = 0; i < maxEle; i++) {
-            // If the current key slot is empty, insert the key and ID
+        // Search for an empty slot in the current node
+        for (i = 0; i < maxEle; i++) {
             if (temp->key[i] == 0) {
+                // Insert the key and RID into the current node
                 temp->id[i].page = rid.page;
                 temp->id[i].slot = rid.slot;
                 temp->key[i] = key->v.intV;
@@ -197,7 +195,7 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
             }
         }
 
-        // If the current node is full and doesn't have a child, link the new node
+        // If no empty slot found and current node is not a leaf node, move to the next child
         if ((nodeFull == 0) && (temp->children[maxEle] == NULL)) {
             node->children[maxEle] = NULL;
             temp->children[maxEle] = node;
@@ -207,10 +205,10 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
     }
 
     int totalEle = 0;
-    // Count the total number of elements in the B-tree
     temp = root;
+    // Count the total number of elements in the B-tree
     while (temp != NULL) {
-        for (int i = 0; i < maxEle; i++) {
+        for (i = 0; i < maxEle; i++) {
             if (temp->key[i] != 0) {
                 totalEle++;
             }
@@ -218,8 +216,9 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
         temp = temp->children[maxEle];
     }
 
-    // If the B-tree reaches a certain number of elements, perform a split operation
+    // If the total number of elements reaches the maximum capacity, perform a split
     if (totalEle == 6) {
+        // Perform split by redistributing keys and children
         node->key[0] = root->children[maxEle]->key[0];
         node->key[1] = root->children[maxEle]->children[maxEle]->key[0];
         node->children[0] = root;
@@ -231,38 +230,39 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
 }
 
 
+
 // Function to delete a key from a B-tree
 RC deleteKey(BTreeHandle *tree, Value *key)
 {
-    // Allocate memory for temporary B-tree node
     BTree *temp = (BTree*)malloc(sizeof(BTree));
-    // Initialize variables
-    int found = 0, i = 0; // Initialize i here
-    temp = root; // Initialize temp outside the loop
+    int found = 0, i;
     
-    // Loop through the B-tree nodes
-    while (temp != NULL && !found) { // Change for loop to while loop
-        // Loop through the keys in the current node
-        while (i < maxEle) { // Change for loop to while loop
-            // If the key is found, remove it
+    // Traverse the B-tree until the key is found or no more nodes to explore
+    while (temp != NULL) {
+        // Iterate through keys in the current node
+        for (i = 0; i < maxEle; i++) {
+            // If key is found, mark it as deleted
             if (temp->key[i] == key->v.intV) {
-                temp->key[i] = 0;
-                temp->id[i].page = 0;
-                temp->id[i].slot = 0;
-                found = 1;
-                break;
+                temp->key[i] = 0; // Mark key as deleted
+                temp->id[i].page = 0; // Reset page ID
+                temp->id[i].slot = 0; // Reset slot ID
+                found = 1; // Set found flag
+                break; // Exit the loop
             }
-            i++; // Increment i here
         }
+        // If key is found, exit the outer loop
+        if (found == 1)
+            break;
+        // Move to the next node
         temp = temp->children[maxEle];
-        i = 0; // Reset i here
     }
     
-    // Free the allocated memory
-    free(temp);
-    // Return success status
-    return RC_OK;
+    // Free dynamically allocated memory (if necessary)
+    // free(temp); // Uncomment if memory allocation was needed
+    
+    return RC_OK; // Return success
 }
+
 
 
 //
