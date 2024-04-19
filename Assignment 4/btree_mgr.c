@@ -231,36 +231,37 @@ RC insertKey(BTreeHandle *tree, Value *key, RID rid)
 
 
 
-// Function to delete a key from a B-tree
 RC deleteKey(BTreeHandle *tree, Value *key)
 {
+    // Allocate memory for a temporary BTree node
     BTree *temp = (BTree*)malloc(sizeof(BTree));
-    int found = 0, i;
-    
-    // Traverse the B-tree until the key is found or no more nodes to explore
-    while (temp != NULL) {
-        // Iterate through keys in the current node
-        for (i = 0; i < maxEle; i++) {
-            // If key is found, mark it as deleted
+    // Variable to track if the key is found
+    int found = 0;
+    // Loop through the tree nodes
+    for (temp = root; temp != NULL; temp = temp->children[maxEle]) {
+        // Initialize loop variable
+        int i = 0;
+        // Loop through the keys in the current node
+        while (i < maxEle && !found) {
+            // If the key is found, mark it as deleted
             if (temp->key[i] == key->v.intV) {
-                temp->key[i] = 0; // Mark key as deleted
-                temp->id[i].page = 0; // Reset page ID
-                temp->id[i].slot = 0; // Reset slot ID
-                found = 1; // Set found flag
-                break; // Exit the loop
+                temp->key[i] = 0;
+                temp->id[i].page = 0;
+                temp->id[i].slot = 0;
+                // Set found flag to true
+                found = 1;
+                // Exit the loop
+                break;
             }
+            // Move to the next key
+            i++;
         }
-        // If key is found, exit the outer loop
+        // If the key is found, exit the outer loop
         if (found == 1)
             break;
-        // Move to the next node
-        temp = temp->children[maxEle];
     }
-    
-    // Free dynamically allocated memory (if necessary)
-    // free(temp); // Uncomment if memory allocation was needed
-    
-    return RC_OK; // Return success
+    // Return success code
+    return RC_OK;
 }
 
 
