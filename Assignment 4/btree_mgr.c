@@ -19,9 +19,8 @@ BTree *root;
 BTree *scan;
 int indexNum = 0;
 
-### Index Manager
-#### Initialization and Shutdown
-```c
+// Index Manager
+// Initialization and Shutdown
 RC initIndexManager(void *mgmtData)
 {
     return RC_OK;
