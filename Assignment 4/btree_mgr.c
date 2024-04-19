@@ -19,7 +19,9 @@ BTree *root;
 BTree *scan;
 int indexNum = 0;
 
-// init and shutdown index manager
+### Index Manager
+#### Initialization and Shutdown
+```c
 RC initIndexManager(void *mgmtData)
 {
     return RC_OK;
@@ -33,19 +35,16 @@ RC shutdownIndexManager()
 // create, destroy, open, and close a B-tree index
 RC createBtree(char *idxId, DataType keyType, int n)
 {
-    int i = 0;
-
     // Allocate memory for the root node
-    root = (BTree *)malloc(sizeof(BTree));
-    root->key = malloc(sizeof(int) * (n - 1)); // Change to (n-1) for a B-tree
+    root = malloc(sizeof(BTree));
+    root->key = malloc(sizeof(int) * (n - 1));
     root->id = malloc(sizeof(RID) * n);
-    root->children = malloc(sizeof(BTree *) * n); // Change to (n) for a B-tree
+    root->children = malloc(sizeof(BTree *) * n);
 
-    // Initialize child pointers to NULL using a do-while loop
-    do {
+    // Initialize child pointers to NULL
+    for (int i = 0; i < n; i++) {
         root->children[i] = NULL;
-        ++i;
-    } while (i < n);
+    }
 
     // Set the maximum number of elements
     maxEle = n;
@@ -56,19 +55,23 @@ RC createBtree(char *idxId, DataType keyType, int n)
     return RC_OK;
 }
 
-
 RC openBtree(BTreeHandle **tree, char *idxId)
 {
-    return (openPageFile(idxId, &btree_fh) == 0) ? RC_OK : RC_ERROR;
+    return (openPageFile(idxId, &btree_fh) == 0)? RC_OK : RC_ERROR;
 }
+
 RC closeBtree(BTreeHandle *tree)
 {
-    return (closePageFile(&btree_fh) != 0) ? RC_ERROR : (free(root), RC_OK);
+    if (closePageFile(&btree_fh)!= 0) {
+        return RC_ERROR;
+    }
+    free(root);
+    return RC_OK;
 }
 
 RC deleteBtree(char *idxId)
 {
-    return (destroyPageFile(idxId) == 0) ? RC_OK : RC_ERROR;
+    return (destroyPageFile(idxId) == 0)? RC_OK : RC_ERROR;
 }
 
 
