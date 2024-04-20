@@ -59,34 +59,53 @@ RC openBtree(BTreeHandle **tree, char *idxId)
     return (openPageFile(idxId, &btree_fh) == 0)? RC_OK : RC_ERROR;
 }
 
+
 RC closeBtree(BTreeHandle *tree)
 {
-    if (closePageFile(&btree_fh)!= 0) {
+    // return (closePageFile(&btree_fh) != 0) ? RC_ERROR : (free(root), RC_OK);
+    if (tree == NULL || tree->managementData == NULL) {
         return RC_ERROR;
     }
-    free(root);
-    return RC_OK;
+    else
+    {
+        //closing all file handlers
+        int closeBtree = fclose(btree_fh.mgmtInfo);
+
+            if (closeBtree == EOF) {
+                return RC_ERROR;
+            }
+        // Free memory allocated for tree manager and tree handle.
+        free(root);
+        free(tree);
+        // Return success status.
+        return RC_OK;
+    }
 }
+
 
 RC deleteBtree(char *idxId)
 {
-    return (destroyPageFile(idxId) == 0)? RC_OK : RC_ERROR;
+  if (remove(idxId) == 0)
+		{
+            return RC_OK;
+        }
+	return RC_ERROR;
 }
+
 
 
 
 // access information about a b-tree
 RC getNumNodes(BTreeHandle *tree, int *result)
 {
+    
     BTree *temp = (BTree*)malloc(sizeof(BTree));
 
     int numNodes = 0;
-    int i = 0;
 
-    do {
-        numNodes++;
-        i++;
-    } while (i < maxEle + 2);
+    for (int i = 0; i < maxEle + 2; i++) {
+            numNodes++;
+        }
 
     *result = numNodes;
 
@@ -94,29 +113,28 @@ RC getNumNodes(BTreeHandle *tree, int *result)
 
     return RC_OK;
 }
+RC getNumEntries(BTreeHandle *tree, int *result) {
+  
+    int totalEle = 0;
 
+    BTree *temp = root; // Assigning root to temp
 
-RC getNumEntries(BTreeHandle *tree, int *result)
-{
-    int totalEle = 0, i;
-    BTree *temp = (BTree *)malloc(sizeof(BTree));
-
-    temp = root;
-    do {
-        i = 0;
-        while (i < maxEle) {
+    // Traverse the tree to count the total number of elements
+    while (temp != NULL) {
+        for (int i = 0; i < maxEle; i++) {
             if (temp->key[i] != 0) {
                 totalEle++;
             }
-            i++;
         }
         temp = temp->children[maxEle];
-    } while (temp != NULL);
+    }
 
-    *result = totalEle;
-    free(temp);  // Assuming you want to free the allocated memory for temp
-    return RC_OK;
+    *result = totalEle; // Update result
+    return RC_OK; // Return success
 }
+
+
+
 
 //
 RC getKeyType (BTreeHandle *tree, DataType *result)
