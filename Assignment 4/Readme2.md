@@ -122,6 +122,7 @@ deleteKey(BTreeHandle *tree, Value *key):
   Set the found flag to 1 and break out of the loop.
   If the key was found, return RC_OK; otherwise, return RC_OK.
   Free the temporary BTree node.
+
   
 openTreeScan(BTreeHandle *tree, BT_ScanHandle **handle):
    Description: Initiates a scanning process to access all entries within the B-tree, enabling comprehensive data traversal.
