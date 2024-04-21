@@ -33,18 +33,21 @@ Running the Script
    1. initIndexManager(void *managementData):
    
    Description: Initializes the B-tree index manager by performing any necessary setup routines, such as allocating memory or initializing data structures.
+   
    Procedure:
       The provided code simply returns RC_OK, indicating successful initialization.
 
    2. shutdownIndexManager():
    
    Description: Shuts down the B-tree index manager by releasing allocated resources and performing cleanup tasks.
+   
    Procedure:
       The function simply returns RC_OK, indicating successful shutdown.
 
    3. createBtree(char *indexId, DataType keyType, int n):
    
    Description: Creates a new B-tree index with the given identifier, key data type, and maximum number of elements per node.
+   
    Procedure:
       Allocate memory for the root node of the B-tree, including memory for the keys, RIDs, and child pointers.
       Initialize the child pointers to NULL using a do-while loop.
@@ -53,19 +56,25 @@ Running the Script
       Return RC_OK to indicate successful creation of the B-tree.
    
    4. openBtree(BTreeHandle **tree, char *indexId):
+      
    Description: Opens an existing B-tree index with the given identifier.
+   
    Procedure:
       Open the page file associated with the given identifier using the openPageFile function.
       If the page file is opened successfully, return RC_OK; otherwise, return RC_ERROR.
    
    5. closeBtree(BTreeHandle *tree):
+      
    Description: Closes an open B-tree index.
+   
    Procedure:
      Close the page file associated with the B-tree using the closePageFile function.
      If the page file is closed successfully, free the memory allocated for the root node and return RC_OK; otherwise, return RC_ERROR.
    
    6. deleteBtree(char *indexId):
+      
    Description: Deletes an existing B-tree index with the given identifier.
+   
    Procedure:
       Destroy the page file associated with the given identifier using the destroyPageFile function.
       If the page file is destroyed successfully, return RC_OK; otherwise, return RC_ERROR
@@ -73,7 +82,9 @@ Running the Script
 3. ACCESS FUNCTIONS
    ------------------------------------------------------------
 	1. getNumNodes(BTreeHandle *tree, int *result):
-	Description: Retrieves the number of nodes in the B-tree.
+	
+ 	Description: Retrieves the number of nodes in the B-tree.
+
 	Procedure:
 	   Allocate memory for a temporary BTree node.
 	   Initialize a numNodes counter and iterate through the B-tree.
@@ -81,14 +92,18 @@ Running the Script
 	   Store the numNodes value in the result parameter and free the temporary BTree node.
    
 	2. getNumEntries(BTreeHandle *tree, int *result):
-	Description: Retrieves the total number of entries stored in the B-tree.
+	
+ 	Description: Retrieves the total number of entries stored in the B-tree.
+
 	Procedure:
 	   Allocate memory for a temporary BTree node and initialize a totalElement counter.
 	   Traverse the B-tree, counts the number of non-zero keys in each node and add them to the totalElement counter.
 	   Store the totalElement value in the result parameter and free the temporary BTree node.
 	   
 	3. getKeyType(BTreeHandle *tree, DataType *result):
-	Description: Retrieves the data type of the keys stored in the B-tree.
+	
+ 	Description: Retrieves the data type of the keys stored in the B-tree.
+
 	Procedure:
 	   Retrieves the data type that the B-tree's keys are made of, making it possible to handle and interpret stored data correctly.
 	   Returns the data type of the stored key.
@@ -96,7 +111,9 @@ Running the Script
 5. INDEX ACCESS FUNCTIONS
    ---------------------------------------------------------------
 	1. findKey(BTreeHandle *tree, Value *key, RID *result):
-	Description: Searches for and retrieves a specific key within the B-tree, facilitating data retrieval operations.
+	
+ 	Description: Searches for and retrieves a specific key within the B-tree, facilitating data retrieval operations.
+
 	Procedure:
 	   Allocate memory for a temporary BTree node and initialize a found flag.
 	   Set the temporary node to the root of the B-tree and Iterate through the keys in each node, to check if the provided key matches any of the keys in the node.
@@ -104,8 +121,10 @@ Running the Script
 	   If the temporary node has no more children,it breaks out of the loop, else, move to the next child node.
 	   If the key was found, return RC_OK; Free the temporary BTree node.
 	   
-2. insertKey(BTreeHandle *tree, Value *key, RID rid):
-	   Description: Adds a new key into the B-tree structure, maintaining the B-tree properties and ensuring proper insertion.
+	2. insertKey(BTreeHandle *tree, Value *key, RID rid):
+
+    	Description: Adds a new key into the B-tree structure, maintaining the B-tree properties and ensuring proper insertion.
+    
 	   Procedure:
 	   Allocate memory for temporary BTree nodes, including one for a new node.
 	   Initialize the new node's keys to 0 and its child pointers to NULL.
@@ -115,8 +134,10 @@ Running the Script
 	   If the total number of elements in the B-tree reaches a certain threshold i.e, 6 perform a split operation to maintain the B-tree properties.
 	   Return RC_OK is insertion is succesful. Free the temporary BTree nodes.
 	  
-3. deleteKey(BTreeHandle *tree, Value *key):
-	   Description: Removes the specified key and its associated entry from the B-tree, ensuring accurate deletion without affecting structure.
+	4. deleteKey(BTreeHandle *tree, Value *key):
+
+    	Description: Removes the specified key and its associated entry from the B-tree, ensuring accurate deletion without affecting structure.
+    
 	   Procedure:
 	   Allocate memory for a temporary BTree node.
 	   Set the temporary node to the root of the B-tree.
@@ -127,8 +148,10 @@ Running the Script
 	   Free the temporary BTree node.
 
   
-4. openTreeScan(BTreeHandle *tree, BT_ScanHandle **handle):
-	   Description: Initiates a scanning process to access all entries within the B-tree, enabling comprehensive data traversal.
+	6. openTreeScan(BTreeHandle *tree, BT_ScanHandle **handle):
+	
+ 	   Description: Initiates a scanning process to access all entries within the B-tree, enabling comprehensive data traversal.
+    
 	   Procedure:
 	    Allocate memory for a temporary BTree node and set it to the root of the B-tree.
 	    Initialize a totalEle counter and traverse the B-tree, counting the number of non-zero keys in each node and adding them to the totalEle counter.
@@ -139,19 +162,23 @@ Running the Script
 	    Return RC_OK to indicate successful initialization.
     
 
-5. nextEntry(BT_ScanHandle *handle, RID *result):
-   Description: Continues the traversal process, reading and providing the next entry in the B-tree during ongoing scanning.
-   Procedure:
-    Check if the scan pointer has a non-NULL child node.
-    If the indexNum is equal to the maximum number of elements per node, move the scan pointer to the next child node and reset the indexNum to 0.
-    Retrieve the page and slot values from the current entry in the scan node and store them in the result parameter.
-    Increment the indexNum to move to the next entry.
-    If there are no more entries to retrieve, return RC_IM_NO_MORE_ENTRIES else, return RC_OK.
+	8. nextEntry(BT_ScanHandle *handle, RID *result):
+		
+        Description: Continues the traversal process, reading and providing the next entry in the B-tree during ongoing scanning.
+    
+	   Procedure:
+	    Check if the scan pointer has a non-NULL child node.
+	    If the indexNum is equal to the maximum number of elements per node, move the scan pointer to the next child node and reset the indexNum to 0.
+	    Retrieve the page and slot values from the current entry in the scan node and store them in the result parameter.
+	    Increment the indexNum to move to the next entry.
+	    If there are no more entries to retrieve, return RC_IM_NO_MORE_ENTRIES else, return RC_OK.
 
-6. closeTreeScan(BT_ScanHandle *handle):
-   Description: Finalizes the ongoing scanning/traversal process within the B-tree, ensuring proper completion and resource cleanup.
-   Procedure:
-      Reset the indexNum to 0 to prepare for the next scan.
-      Return RC_OK to indicate successful completion of the tree scan.
-   
+	10. closeTreeScan(BT_ScanHandle *handle):
+
+        Description: Finalizes the ongoing scanning/traversal process within the B-tree, ensuring proper completion and resource cleanup.
+
+           Procedure:
+	    Reset the indexNum to 0 to prepare for the next scan.
+	    Return RC_OK to indicate successful completion of the tree scan.
+	   
 
