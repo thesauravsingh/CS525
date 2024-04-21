@@ -61,24 +61,7 @@ RC openBtree(BTreeHandle **tree, char *idxId)
 
 RC closeBtree(BTreeHandle *tree)
 {
-    // return (closePageFile(&btree_fh) != 0) ? RC_ERROR : (free(root), RC_OK);
-    if (tree == NULL || tree->managementData == NULL) {
-        return RC_ERROR;
-    }
-    else
-    {
-        //closing all file handlers
-        int closeBtree = fclose(btree_fh.mgmtInfo);
-
-            if (closeBtree == EOF) {
-                return RC_ERROR;
-            }
-        // Free memory allocated for tree manager and tree handle.
-        free(root);
-        free(tree);
-        // Return success status.
-        return RC_OK;
-    }
+    return (closePageFile(&btree_fh) != 0) ? RC_ERROR : (free(root), RC_OK);
 }
 
 
